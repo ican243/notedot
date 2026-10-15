@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\User;
+use App\Models\Customer;
+use App\Models\Staff;
 
 return [
 
@@ -16,8 +17,8 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        'guard' => env('AUTH_GUARD', 'admin'),
+        'passwords' => env('AUTH_PASSWORD_BROKER', 'staffs'),
     ],
 
     /*
@@ -38,9 +39,16 @@ return [
     */
 
     'guards' => [
-        'web' => [
+        // 관리자 문: staffs 표로 로그인 확인
+        'admin' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'staffs',
+        ],
+
+        // 고객 문: customers 표로 로그인 확인
+        'customer' => [
+            'driver' => 'session',
+            'provider' => 'customers',
         ],
     ],
 
@@ -62,15 +70,15 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        'staffs' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => Staff::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => Customer::class,
+        ],
     ],
 
     /*
@@ -93,8 +101,8 @@ return [
     */
 
     'passwords' => [
-        'users' => [
-            'provider' => 'users',
+        'staffs' => [
+            'provider' => 'staffs',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,

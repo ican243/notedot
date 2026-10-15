@@ -3,7 +3,111 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* 공통 색 (계절 무관 고정) */
+:root {
+    --bg: #f6f4f1;
+    --card: #ffffff;
+    --text: #22262e;
+    --text-sub: #5b6270;
+    --line: #ececec;
+    --radius: 20px;
+    --shadow: 12px 12px 0 rgba(0, 0, 0, .08);
+
+    /* 예약 상태 색 */
+    --st-confirmed: #2463b8;
+    --st-pending: #b45309;
+    --st-completed: #3f4754;
+    --st-canceled: #8a929e;
+    --st-noshow: #b42318;
 }
+
+/* 계절 색: <html data-season="..."> 값에 따라 바뀜 */
+[data-season="spring"] {
+    --s1:#8fcbee; --s2:#fbd3e0; --sun:#ffffff; --sunh:rgba(255,255,255,.55); --sunh2:rgba(255,255,255,.18);
+    --o1:#e4f3fa; --o2:#c3e4f2; --h1:#dcefc2; --h2:#bfe09c; --h3:#93c675; --h4:#aad28a;
+    --dot:#f49ab6; --ink:#2a3442; --btn:#c8557a;
+}
+[data-season="summer"] {
+    --s1:#1b73c4; --s2:#68d3df; --sun:#ffe24d; --sunh:rgba(255,226,77,.45); --sunh2:rgba(255,226,77,.15);
+    --o1:#74d8e2; --o2:#25a9c0; --h1:#66b874; --h2:#45a05d; --h3:#2f7f4b; --h4:#256a3e;
+    --dot:transparent; --ink:#ffffff; --btn:#1b6fb8;
+}
+:root, [data-season="autumn"] {
+    --s1:#e96594; --s2:#f7e157; --sun:#ffffff; --sunh:rgba(255,255,255,.5); --sunh2:rgba(255,255,255,.12);
+    --o1:#f7da96; --o2:#f1c07d; --h1:#e6b29d; --h2:#c29182; --h3:#b77873; --h4:#a16773;
+    --dot:transparent; --ink:#ffffff; --btn:#b4506f;
+}
+[data-season="winter"] {
+    --s1:#22325c; --s2:#9a8dcc; --sun:#eef1f8; --sunh:rgba(238,241,248,.28); --sunh2:rgba(238,241,248,.1);
+    --o1:#c9d6e8; --o2:#aabcd6; --h1:#e3eaf3; --h2:#d6e0ec; --h3:#f4f7fb; --h4:#e6edf5;
+    --dot:#ffffff; --ink:#ffffff; --btn:#34497a;
+}
+
+/* Tailwind 클래스로 쓰기: bg-card, text-sub, bg-btn, border-line ... */
+@theme inline {
+    --font-sans: 'Pretendard Variable', Pretendard, ui-sans-serif, system-ui, sans-serif;
+    --color-bg: var(--bg);
+    --color-card: var(--card);
+    --color-text: var(--text);
+    --color-sub: var(--text-sub);
+    --color-line: var(--line);
+    --color-btn: var(--btn);
+    --color-ink: var(--ink);
+    --color-st-confirmed: var(--st-confirmed);
+    --color-st-pending: var(--st-pending);
+    --color-st-completed: var(--st-completed);
+    --color-st-canceled: var(--st-canceled);
+    --color-st-noshow: var(--st-noshow);
+    --radius-card: var(--radius);
+    --shadow-card: var(--shadow);
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* 풍경 카드 (x-season-card) — 안쪽 장식만 absolute 배치 */
+.season-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    background: linear-gradient(180deg, var(--s1), var(--s2));
+    color: var(--ink);
+    isolation: isolate;
+}
+.season-card .sc-sun {
+    position: absolute; top: 14%; right: 12%;
+    width: 56px; aspect-ratio: 1; border-radius: 50%;
+    background: var(--sun);
+    box-shadow: 0 0 0 14px var(--sunh), 0 0 0 30px var(--sunh2);
+    z-index: -1;
+}
+.season-card .sc-sea {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 34%;
+    background: linear-gradient(180deg, var(--o1), var(--o2));
+    z-index: -1;
+}
+.season-card .sc-hill {
+    position: absolute; bottom: -40%; border-radius: 50%; z-index: -1;
+}
+.season-card .sc-h1 { left: -10%; width: 70%; height: 75%; background: var(--h1); }
+.season-card .sc-h2 { right: -15%; width: 75%; height: 70%; background: var(--h2); }
+.season-card .sc-h3 { left: 15%; width: 60%; height: 55%; bottom: -35%; background: var(--h3); }
+.season-card .sc-h4 { right: 5%; width: 45%; height: 45%; bottom: -30%; background: var(--h4); }
+.season-card .sc-dot {
+    position: absolute; width: 7px; aspect-ratio: 1; border-radius: 50%;
+    background: var(--dot); z-index: -1;
+}
+[data-season="summer"] .season-card .sc-dot,
+[data-season="autumn"] .season-card .sc-dot { display: none; }
+
+/* 메인 버튼 (계절 색) */
+.btn-main {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: .7rem 1.2rem; border-radius: 12px;
+    background: var(--btn); color: #fff; font-weight: 600;
+    transition: filter .15s;
+}
+.btn-main:hover { filter: brightness(1.08); }

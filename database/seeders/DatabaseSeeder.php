@@ -2,24 +2,23 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Shop;
+use App\Models\Staff;
 use Illuminate\Database\Seeder;
 
+// 로그인 확인용 최소 데이터 (업종별 데모 매장 3개는 Phase 2에서)
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $shop = Shop::updateOrCreate(
+            ['slug' => 'demo-hair'],
+            ['name' => '노트닷 헤어', 'industry' => 'beauty', 'slot_unit' => 30],
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        Staff::updateOrCreate(
+            ['shop_id' => $shop->id, 'email' => 'owner@notedot.test'],
+            ['name' => '김원장', 'role' => 'owner', 'password' => 'notedot1234'],
+        );
     }
 }
