@@ -30,7 +30,13 @@ class Staff extends Authenticatable
         return $this->belongsTo(Shop::class);
     }
 
-    // 원장(전체 권한)인지
+    // 연결된 예약 대상 (캘린더에서 본인 일정)
+    public function resource(): BelongsTo
+    {
+        return $this->belongsTo(Resource::class);
+    }
+
+    // 대표(전체 권한)인지
     public function isOwner(): bool
     {
         return $this->role === 'owner';

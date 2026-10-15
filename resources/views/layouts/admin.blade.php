@@ -12,7 +12,17 @@
 </head>
 <body class="min-h-screen font-sans antialiased">
 @auth('admin')
-    @php($me = auth('admin')->user())
+    @php
+        $me = auth('admin')->user();
+        // [주소 이름, 화면 이름, 이 주소로 시작하면 선택 표시, 대표 전용]
+        $menu = [
+            ['admin.dashboard', '대시보드', 'admin.dashboard', false],
+            ['admin.resources.index', term('resource').' 관리', 'admin.resources.*,admin.schedules.*', true],
+            ['admin.services.index', term('service').' 관리', 'admin.services.*', true],
+            ['admin.staffs.index', '직원 계정', 'admin.staffs.*', true],
+            ['admin.settings.shop', '매장 설정', 'admin.settings.*', true],
+        ];
+    @endphp
     <div class="min-h-screen md:grid md:grid-cols-[220px_1fr]">
         {{-- 왼쪽 메뉴 --}}
         <aside class="border-b border-line bg-card md:border-b-0 md:border-r">
@@ -20,13 +30,17 @@
                 <a href="{{ route('admin.dashboard') }}" class="text-lg font-bold">notedot</a>
                 <p class="text-sm text-sub md:mt-1">{{ $me->shop->name }}</p>
             </div>
-            <nav class="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
-                <a href="{{ route('admin.dashboard') }}"
-                   @class([
-                       'rounded-lg px-3 py-2 text-sm whitespace-nowrap',
-                       'bg-bg font-semibold' => request()->routeIs('admin.dashboard'),
-                       'text-sub hover:bg-bg' => ! request()->routeIs('admin.dashboard'),
-                   ])>대시보드</a>
+            <nav class="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col">
+                @foreach ($menu as [$route, $label, $pattern, $ownerOnly])
+                    @continue($ownerOnly && ! $me->isOwner())
+                    @php($active = request()->routeIs(...explode(',', $pattern)))
+                    <a href="{{ route($route) }}"
+                       @class([
+                           'rounded-lg px-3 py-2 text-sm whitespace-nowrap',
+                           'bg-bg font-semibold' => $active,
+                           'text-sub hover:bg-bg' => ! $active,
+                       ])>{{ $label }}</a>
+                @endforeach
             </nav>
         </aside>
 
@@ -41,6 +55,12 @@
             </header>
 
             <main class="mx-auto w-full max-w-6xl flex-1 p-5 md:p-8">
+                @if (session('status'))
+                    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
+                         class="mb-5 rounded-lg border border-line bg-card px-4 py-3 text-sm">
+                        {{ session('status') }}
+                    </div>
+                @endif
                 @yield('content')
             </main>
         </div>
