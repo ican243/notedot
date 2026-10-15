@@ -131,3 +131,31 @@ body {
 .table td { padding: .75rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .table tr:last-child td { border-bottom: 0; }
 .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; background: var(--bg); color: var(--text-sub); }
+
+/* ── 예약 캘린더 (계절 무관: 블록 색은 resource 색, 상태는 모양으로 구분) ── */
+.fc { --fc-border-color: var(--line); --fc-today-bg-color: #fbfaf7; --fc-now-indicator-color: var(--st-noshow); font-size: .8125rem; }
+.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; }
+.fc .fc-button { background: #fff; border: 1px solid #d9d9d9; color: var(--text); font-size: .8125rem; box-shadow: none !important; }
+.fc .fc-button:hover { background: var(--bg); color: var(--text); }
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active { background: var(--text); border-color: var(--text); color: #fff; }
+.fc .fc-non-business { background: #f3f1ed; }
+.fc .fc-timegrid-event { border-radius: 6px; border-width: 0; box-shadow: none; }
+.fc .ev-body { padding: 2px 4px; line-height: 1.25; overflow: hidden; color: #fff; }
+.fc .ev-time { font-size: .7rem; opacity: .9; }
+.fc .ev-title { font-weight: 600; }
+.fc .ev-sub { font-size: .7rem; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc .ev-pending { outline: 2px dashed var(--st-pending); outline-offset: -2px; }
+.fc .ev-completed { opacity: .6; }
+.fc .ev-no_show { outline: 2px solid var(--st-noshow); outline-offset: -2px; opacity: .7; }
+.fc .ev-canceled { opacity: .35; }
+.fc .ev-canceled .ev-title { text-decoration: line-through; }
+
+/* 상태 배지 (계절 무관 고정 색) */
+.st-badge { display: inline-block; padding: .1rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 600; color: #fff; }
+.st-pending { background: var(--st-pending); }
+.st-confirmed { background: var(--st-confirmed); }
+.st-completed { background: var(--st-completed); }
+.st-canceled { background: var(--st-canceled); }
+.st-no_show { background: var(--st-noshow); }
+[x-cloak] { display: none !important; }

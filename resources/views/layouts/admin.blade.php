@@ -17,6 +17,7 @@
         // [주소 이름, 화면 이름, 이 주소로 시작하면 선택 표시, 대표 전용]
         $menu = [
             ['admin.dashboard', '대시보드', 'admin.dashboard', false],
+            ['admin.calendar', '예약 캘린더', 'admin.calendar', false],
             ['admin.resources.index', term('resource').' 관리', 'admin.resources.*,admin.schedules.*', true],
             ['admin.services.index', term('service').' 관리', 'admin.services.*', true],
             ['admin.staffs.index', '직원 계정', 'admin.staffs.*', true],
@@ -54,7 +55,7 @@
                 </form>
             </header>
 
-            <main class="mx-auto w-full max-w-6xl flex-1 p-5 md:p-8">
+            <main class="mx-auto w-full @yield('width', 'max-w-6xl') flex-1 p-5 md:p-8">
                 @if (session('status'))
                     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
                          class="mb-5 rounded-lg border border-line bg-card px-4 py-3 text-sm">

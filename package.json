@@ -7,6 +7,9 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "@fullcalendar/core": "^6.1.21",
+        "@fullcalendar/interaction": "^6.1.21",
+        "@fullcalendar/timegrid": "^6.1.21",
         "@tailwindcss/vite": "^4.0.0",
         "alpinejs": "^3.17.4",
         "concurrently": "^10.0.3",

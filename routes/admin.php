@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\LoginController;
+use App\Http\Controllers\Admin\CalendarController;
+use App\Http\Controllers\Admin\CustomerSearchController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReservationController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
@@ -23,6 +26,16 @@ Route::middleware('guest:admin')->group(function () {
 Route::middleware('auth:admin')->group(function () {
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // 예약 캘린더 (대표·직원 모두. 직원은 자기 resource 만)
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+    Route::get('calendar/events', [CalendarController::class, 'events'])->name('calendar.events');
+    Route::get('customers/search', CustomerSearchController::class)->name('customers.search');
+    Route::post('reservations', [ReservationController::class, 'store'])->name('reservations.store');
+    Route::get('reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
+    Route::put('reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
+    Route::patch('reservations/{reservation}/move', [ReservationController::class, 'move'])->name('reservations.move');
+    Route::patch('reservations/{reservation}/status', [ReservationController::class, 'status'])->name('reservations.status');
 
     // 대표만
     Route::middleware('owner')->group(function () {

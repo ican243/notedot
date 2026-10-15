@@ -53,6 +53,11 @@ class Shop extends Model
         return $this->hasMany(Service::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
     public function resourceSchedules(): HasMany
     {
         return $this->hasMany(ResourceSchedule::class);

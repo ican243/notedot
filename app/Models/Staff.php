@@ -36,6 +36,21 @@ class Staff extends Authenticatable
         return $this->belongsTo(Resource::class);
     }
 
+    // 이 직원이 캘린더에서 볼 수 있는 resource id: 대표는 전부, 직원은 연결된 자기 것만
+    public function visibleResourceIds(): array
+    {
+        if ($this->isOwner()) {
+            return $this->shop->resources()->pluck('id')->all();
+        }
+
+        return $this->resource_id ? [$this->resource_id] : [];
+    }
+
+    public function canAccessResource(int|string|null $resourceId): bool
+    {
+        return $resourceId && in_array((int) $resourceId, $this->visibleResourceIds(), true);
+    }
+
     // 대표(전체 권한)인지
     public function isOwner(): bool
     {
