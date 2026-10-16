@@ -2,6 +2,7 @@
 // - 캘린더 그리기: calendar-fc.js (FullCalendar)
 // - 이 파일: 담당자 필터, 예약 창(만들기/수정), 그룹 일정 창(만들기/보기·신청), 고객 검색, 상태 변경, 서버 통신
 import { api } from '../api';
+import { listen, debounce } from '../realtime';
 
 const STORAGE_KEY = 'notedot.calendar.resources';
 
@@ -86,6 +87,36 @@ export default (config) => {
             this.selected = this.loadSelected();
             const { mountCalendar } = await import('./calendar-fc');
             calendar = mountCalendar(this.$refs.calendar, this);
+            this.listenRealtime();
+        },
+
+        // ── 실시간: 다른 사람(고객 온라인 예약, 다른 직원)이 바꾸면 캘린더를 다시 불러오고 알림 ──
+        listenRealtime() {
+            const refresh = debounce(() => calendar?.refetchEvents());
+            listen(this.config.realtime, {
+                events: {
+                    'reservation.changed': (e) => { refresh(); this.announce(e, false); },
+                    'session.changed': (e) => { refresh(); this.announce(e, true); },
+                },
+                refresh,
+            });
+        },
+        announce(e, isSession) {
+            if (e.by && e.by === this.config.me) return;                              // 내가 한 일은 이미 알림을 봤다
+            if (!this.config.resources.some((r) => r.id === e.resource_id)) return;   // 내가 볼 수 없는 담당자
+            const when = `${Number(e.start.slice(5, 7))}/${Number(e.start.slice(8, 10))} ${e.start.slice(11, 16)}`;
+            const group = this.config.labels.group;
+            let what;
+            if (isSession) {
+                what = { created: `${group} 일정 추가${e.count > 1 ? ` (${e.count}개)` : ''}`, canceled: `${group} 일정 취소` }[e.action] || `${group} 일정 변경`;
+            } else if (e.action === 'created') {
+                what = (e.channel === 'online' ? '새 온라인 ' : '새 ') + (e.group ? `${group} 신청` : '예약');
+            } else if (e.action === 'status' && e.status === 'canceled') {
+                what = '예약 취소';
+            } else {
+                what = '예약 변경';
+            }
+            this.notify(`${what} · ${e.resource ?? ''} ${when}`);
         },
 
         // ── 필터 ──────────────────────────────

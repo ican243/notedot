@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\ClassSessionChanged;
 use App\Models\ClassSession;
 use App\Models\Service;
 use App\Models\Shop;
@@ -60,6 +61,10 @@ class ClassSessionService
                 $sessions->push($session);
             }
 
+            if ($sessions->isNotEmpty()) {
+                ClassSessionChanged::dispatch($sessions->first(), 'created', $by, $sessions->count());
+            }
+
             return $sessions;
         });
     }
@@ -82,6 +87,7 @@ class ClassSessionService
             $changes = $this->audit->diff($before, $session->only('capacity', 'memo'));
             if ($changes) {
                 $this->audit->log($session, 'updated', $by, $changes);
+                ClassSessionChanged::dispatch($session, 'updated', $by);
             }
 
             return $session;
@@ -112,6 +118,7 @@ class ClassSessionService
             $session->reservations()->update($times);
 
             $this->audit->log($session, 'moved', $by, ['start_at' => [$old, $newStart->format('Y-m-d H:i')]]);
+            ClassSessionChanged::dispatch($session, 'moved', $by);
 
             return $session;
         });
@@ -136,6 +143,7 @@ class ClassSessionService
             }
 
             $this->audit->log($session, 'canceled', $by, $reason ? ['cancel_reason' => [null, $reason]] : []);
+            ClassSessionChanged::dispatch($session, 'canceled', $by);
 
             return $session;
         });

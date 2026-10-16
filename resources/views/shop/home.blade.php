@@ -96,12 +96,16 @@
             </div>
             <div class="panel p-4">
                 <p class="mb-3 text-sm font-semibold" x-text="day ? day.date + ' (' + day.weekday + ')' : ''"></p>
-                <div class="grid grid-cols-4 gap-2" x-show="day && day.times.length">
-                    <template x-for="t in (day ? day.times : [])" :key="t">
-                        <button type="button" class="rounded-lg border border-line py-2 text-sm font-medium hover:border-text" @click="pickTime(t)" x-text="t"></button>
+                <div class="grid grid-cols-4 gap-2" x-show="dayTimes.length">
+                    <template x-for="slot in dayTimes" :key="slot.t">
+                        <button type="button" class="rounded-lg border py-2 text-sm font-medium" :disabled="slot.closed"
+                                :class="slot.closed ? 'border-line bg-bg text-sub' : 'border-line hover:border-text'" @click="pickTime(slot.t)">
+                            <span class="block" :class="slot.closed && 'line-through'" x-text="slot.t"></span>
+                            <span class="block text-xs text-st-noshow" x-show="slot.closed">마감</span>
+                        </button>
                     </template>
                 </div>
-                <p class="text-sm text-sub" x-show="!day || !day.times.length">예약 가능한 시간이 없습니다.</p>
+                <p class="text-sm text-sub" x-show="!dayTimes.length">예약 가능한 시간이 없습니다.</p>
             </div>
         </div>
     </section>

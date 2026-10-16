@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\RealtimePublisher;
+use App\Services\Realtime\NodePublisher;
+use App\Services\Realtime\PollingPublisher;
+use App\Services\Realtime\RealtimeTokenService;
 use App\Support\CurrentShop;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -10,7 +14,10 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // 실시간 알림: 설정이 node 이고 시크릿이 있으면 Node 서버로, 아니면 화면 폴링에 맡긴다
+        $this->app->bind(RealtimePublisher::class, fn ($app) => $app->make(RealtimeTokenService::class)->usesNode()
+            ? new NodePublisher(config('realtime.server_url'), config('realtime.secret'))
+            : new PollingPublisher);
     }
 
     public function boot(): void

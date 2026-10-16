@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Shop\BookingController;
 use App\Http\Controllers\Shop\HomeController;
+use App\Http\Controllers\Shop\RealtimeTokenController;
 use Illuminate\Support\Facades\Route;
 
 // 고객 주소표 — bootstrap/app.php 에서 /s/{shop:slug} 접두어, shop. 이름표를 붙여 불러온다
@@ -14,3 +15,6 @@ Route::get('booking/slots', [BookingController::class, 'slots'])->name('booking.
 Route::get('booking/sessions', [BookingController::class, 'sessions'])->name('booking.sessions');
 Route::post('booking', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('booking.store');
 Route::get('booking/done', [BookingController::class, 'done'])->name('booking.done');
+
+// 실시간 서버 접속 출입증 (시간이 바뀌면 화면에 바로 "마감" 표시)
+Route::get('realtime/token', RealtimeTokenController::class)->middleware('throttle:30,1')->name('realtime.token');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Services\CalendarService;
+use App\Services\Realtime\RealtimeTokenService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class CalendarController extends Controller
 {
     public function __construct(private CalendarService $calendar) {}
 
-    public function index(Request $request): View
+    public function index(Request $request, RealtimeTokenService $realtime): View
     {
         $staff = $request->user('admin');
         $shop = $staff->shop;
@@ -60,6 +61,8 @@ class CalendarController extends Controller
             'statuses' => Reservation::STATUSES,
             'channels' => Reservation::CHANNELS,
             'labels' => ['resource' => term('resource'), 'service' => term('service'), 'customer' => term('customer'), 'group' => '그룹 '.term('service')],
+            'me' => $staff->id,
+            'realtime' => $realtime->clientConfig(route('admin.realtime.token')),
         ];
 
         return view('admin.calendar', ['config' => $config, 'hasResources' => $resources->isNotEmpty()]);

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\ReservationChanged;
 use App\Models\ClassSession;
 use App\Models\Reservation;
 use App\Models\Resource;
@@ -57,6 +58,7 @@ class ReservationService
             $reservation->items()->createMany($this->itemRows($services));
 
             $this->audit->log($reservation, 'created', $by);
+            ReservationChanged::dispatch($reservation, 'created', $by);
 
             return $reservation;
         });
@@ -105,6 +107,7 @@ class ReservationService
             $reservation->items()->createMany($this->itemRows(collect([$service])));
 
             $this->audit->log($reservation, 'created', $by);
+            ReservationChanged::dispatch($reservation, 'created', $by);
 
             return $reservation;
         });
@@ -147,6 +150,7 @@ class ReservationService
             $changes = $this->audit->diff($before, $this->snapshot($reservation->refresh()));
             if ($changes) {
                 $this->audit->log($reservation, 'updated', $by, $changes);
+                ReservationChanged::dispatch($reservation, 'updated', $by);
             }
 
             return $reservation;
@@ -172,6 +176,7 @@ class ReservationService
             $reservation->update(['start_at' => $newStart, 'end_at' => $end, 'occupied_until' => $occupied]);
 
             $this->audit->log($reservation, 'moved', $by, ['start_at' => [$old, $newStart->format('Y-m-d H:i')]]);
+            ReservationChanged::dispatch($reservation, 'moved', $by);
 
             return $reservation;
         });
@@ -209,6 +214,7 @@ class ReservationService
                 $changes['cancel_reason'] = [null, $reason];
             }
             $this->audit->log($reservation, 'status_changed', $by, $changes);
+            ReservationChanged::dispatch($reservation, 'status', $by);
 
             return $reservation;
         });

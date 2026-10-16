@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\Admin\ClassSessionController;
 use App\Http\Controllers\Admin\CustomerSearchController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\RealtimeTokenController;
 use App\Http\Controllers\Admin\ReservationController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ScheduleController;
@@ -27,6 +28,7 @@ Route::middleware('guest:admin')->group(function () {
 Route::middleware('auth:admin')->group(function () {
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('realtime/token', RealtimeTokenController::class)->name('realtime.token');   // 실시간 서버 접속 출입증
 
     // 예약 캘린더 (대표·직원 모두. 직원은 자기 resource 만)
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
