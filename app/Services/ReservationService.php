@@ -225,7 +225,7 @@ class ReservationService
         }
     }
 
-    // 고른 상품들: 같은 매장 것인지, 그룹 상품이 아닌지, 이 resource 가 할 수 있는지 확인
+    // 고른 상품들: 같은 매장 것인지, 그룹 상품이 아닌지, resource 종류에 맞는지, 이 resource 가 할 수 있는지 확인
     private function servicesFor(Shop $shop, Resource $resource, array $ids): Collection
     {
         $ids = array_values(array_unique(array_map('intval', $ids)));
@@ -237,6 +237,14 @@ class ReservationService
         }
         if ($services->contains('booking_type', 'group')) {
             throw ValidationException::withMessages(['service_ids' => '그룹 (정원제) 상품은 수업 시간표에서 예약합니다.']);
+        }
+
+        // 공간에는 공간 대여 상품만, 사람에게는 1:1 상품만
+        $expected = $resource->type === 'space' ? 'space' : 'one_to_one';
+        if ($services->contains(fn (Service $s) => $s->booking_type !== $expected)) {
+            throw ValidationException::withMessages([
+                'service_ids' => "{$resource->name}에는 예약할 수 없는 ".term('service', $shop).'이(가) 있습니다.',
+            ]);
         }
 
         $allowed = $resource->services()->whereIn('services.id', $ids)->count();

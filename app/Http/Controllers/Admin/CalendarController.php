@@ -36,7 +36,7 @@ class CalendarController extends Controller
                 'customers' => route('admin.customers.search'),
             ],
             'resources' => $resources->map(fn ($r) => [
-                'id' => $r->id, 'name' => $r->name, 'color' => $r->color, 'active' => $r->is_active,
+                'id' => $r->id, 'name' => $r->name, 'type' => $r->type, 'color' => $r->color, 'active' => $r->is_active,
                 'services' => $r->services->pluck('id'),
             ]),
             'services' => $services->map(fn ($s) => [

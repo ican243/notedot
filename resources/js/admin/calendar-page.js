@@ -90,7 +90,7 @@ export default (config) => {
         },
 
         // ── 예약 창 열기 ──────────────────────
-        openCreate(start = null) {
+        openCreate(start = null, end = null) {
             if (!start) {
                 // "+ 예약" 버튼: 지금 이후 가장 가까운 칸
                 start = new Date();
@@ -106,6 +106,7 @@ export default (config) => {
                 date: ymd(start),
                 start_time: hm(start),
             };
+            if (end) this.pickServiceByLength((end - start) / 60000);
             this.resetCustomerSearch();
             this.modalOpen = true;
         },
@@ -189,6 +190,12 @@ export default (config) => {
             for (let m = toMin(this.config.slotMin); m < toMin(this.config.slotMax); m += this.config.slotUnit) list.push(fromMin(m));
             if (this.form.start_time && !list.includes(this.form.start_time)) list.unshift(this.form.start_time);
             return list;
+        },
+        // 공간은 끌어서 고른 길이와 시간이 같은 상품을 미리 골라 둔다 (예: 2시간 끌기 → "2시간 이용")
+        pickServiceByLength(minutes) {
+            if (this.currentResource?.type !== 'space') return;
+            const same = this.availableServices.filter((s) => s.active && s.duration === minutes);
+            if (same.length === 1) this.form.service_ids = [same[0].id];
         },
         onResourceChange() {
             // 새 담당자가 못 하는 상품은 선택에서 뺀다

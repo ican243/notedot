@@ -34,7 +34,7 @@ export function mountCalendar(el, page) {
         events: (info, success, failure) => page.fetchEvents(info).then(success).catch(failure),
         select: (info) => {
             calendar.unselect();
-            page.openCreate(info.start);
+            page.openCreate(info.start, info.end);
         },
         eventClick: (info) => page.openEdit(info.event.id),
         eventDrop: (info) => page.moveEvent(info),
