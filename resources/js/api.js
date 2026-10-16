@@ -20,7 +20,8 @@ export async function api(method, url, body = null) {
         const first = Object.values(error.errors)[0];
         if (first) error.message = first[0];
         if (res.status === 403) error.message = '권한이 없습니다.';
-        if (res.status === 419) error.message = '로그인 시간이 지났습니다. 새로고침 후 다시 시도하세요.';
+        if (res.status === 419) error.message = '화면을 연 지 오래되었습니다. 새로고침 후 다시 시도해 주세요.';
+        if (res.status === 429) error.message = '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
         throw error;
     }
 

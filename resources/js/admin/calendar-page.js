@@ -1,7 +1,7 @@
 // 예약 캘린더 화면의 동작 (Alpine 부품)
 // - 캘린더 그리기: calendar-fc.js (FullCalendar)
 // - 이 파일: 담당자 필터, 예약 창(만들기/수정), 그룹 일정 창(만들기/보기·신청), 고객 검색, 상태 변경, 서버 통신
-import { api } from './api';
+import { api } from '../api';
 
 const STORAGE_KEY = 'notedot.calendar.resources';
 
