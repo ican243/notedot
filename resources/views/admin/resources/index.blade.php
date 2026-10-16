@@ -23,7 +23,7 @@
                             <span class="font-medium">{{ $r->name }}</span>
                         </td>
                         <td>{{ \App\Models\Resource::TYPES[$r->type] }}</td>
-                        <td>{{ $r->capacity }}</td>
+                        <td>{{ $r->capacity }}@if ($r->max_party) <span class="text-sub">· 최대 {{ $r->max_party }}명</span>@endif</td>
                         <td>{{ $r->services_count }}개</td>
                         <td class="text-sub">{{ $r->staff?->email ?? '-' }}</td>
                         <td><span class="badge">{{ $r->is_active ? '예약 받는 중' : '중지' }}</span></td>

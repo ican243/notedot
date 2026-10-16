@@ -176,8 +176,11 @@
                 {{-- 기타 --}}
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-1">
-                        <label class="block text-sm font-medium">인원</label>
-                        <input type="number" min="1" class="input" x-model.number="form.party_size">
+                        <label class="block text-sm font-medium">
+                            인원 <span class="font-normal text-sub" x-show="currentResource?.maxParty" x-text="'· 최대 ' + currentResource?.maxParty + '명'"></span>
+                        </label>
+                        <input type="number" min="1" :max="currentResource?.maxParty || null" class="input" x-model.number="form.party_size">
+                        <p class="text-sm text-st-noshow" x-text="err('party_size')"></p>
                     </div>
                     <div class="space-y-1">
                         <label class="block text-sm font-medium">예약 경로</label>

@@ -16,12 +16,13 @@ class Resource extends Model
 
     public const TYPES = ['person' => '사람', 'space' => '공간'];
 
-    protected $fillable = ['type', 'name', 'color', 'capacity', 'sort_order', 'is_active'];
+    protected $fillable = ['type', 'name', 'color', 'capacity', 'max_party', 'sort_order', 'is_active'];
 
     protected function casts(): array
     {
         return [
             'capacity' => 'integer',
+            'max_party' => 'integer',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];

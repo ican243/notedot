@@ -20,6 +20,7 @@ class ResourceRequest extends AdminRequest
             'name' => ['required', 'string', 'max:50'],
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'capacity' => ['required', 'integer', 'min:1', 'max:500'],
+            'max_party' => ['nullable', 'integer', 'min:1', 'max:500'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['boolean'],
             'service_ids' => ['array'],
@@ -29,6 +30,6 @@ class ResourceRequest extends AdminRequest
 
     public function attributes(): array
     {
-        return ['name' => '이름', 'color' => '색상', 'capacity' => '정원'];
+        return ['name' => '이름', 'color' => '색상', 'capacity' => '정원', 'max_party' => '최대 인원'];
     }
 }

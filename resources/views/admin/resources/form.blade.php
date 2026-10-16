@@ -31,6 +31,10 @@
         <input id="capacity" name="capacity" type="number" min="1" value="{{ old('capacity', $resource->capacity) }}" class="input">
     </x-admin.field>
 
+    <x-admin.field label="최대 인원" name="max_party" help="한 예약에 들어갈 수 있는 인원 (예: 4인실이면 4). 비우면 제한 없음">
+        <input id="max_party" name="max_party" type="number" min="1" value="{{ old('max_party', $resource->max_party) }}" class="input">
+    </x-admin.field>
+
     <x-admin.field label="정렬 순서" name="sort_order" help="작을수록 앞">
         <input id="sort_order" name="sort_order" type="number" min="0" value="{{ old('sort_order', $resource->sort_order ?? 0) }}" class="input">
     </x-admin.field>

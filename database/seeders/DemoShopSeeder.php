@@ -95,9 +95,9 @@ class DemoShopSeeder extends Seeder
         ]);
 
         $all = array_values($services);
-        $this->resource($shop, 'A룸 (4인)', '#25a9c0', $all, type: 'space');
-        $this->resource($shop, 'B룸 (6인)', '#45a05d', $all, type: 'space');
-        $this->resource($shop, 'C룸 (10인)', '#b45309', $all, type: 'space');
+        $this->resource($shop, 'A룸 (4인)', '#25a9c0', $all, type: 'space', maxParty: 4);
+        $this->resource($shop, 'B룸 (6인)', '#45a05d', $all, type: 'space', maxParty: 6);
+        $this->resource($shop, 'C룸 (10인)', '#b45309', $all, type: 'space', maxParty: 10);
     }
 
     // 상품 여러 개 만들고 이름 => id 로 돌려준다
@@ -115,10 +115,10 @@ class DemoShopSeeder extends Seeder
         return $ids;
     }
 
-    private function resource(Shop $shop, string $name, string $color, array $serviceIds, string $type = 'person')
+    private function resource(Shop $shop, string $name, string $color, array $serviceIds, string $type = 'person', ?int $maxParty = null)
     {
         return $this->catalog->saveResource($shop, [
-            'type' => $type, 'name' => $name, 'color' => $color, 'capacity' => 1,
+            'type' => $type, 'name' => $name, 'color' => $color, 'capacity' => 1, 'max_party' => $maxParty,
             'sort_order' => $shop->resources()->count(), 'is_active' => true,
             'service_ids' => $serviceIds,
         ]);

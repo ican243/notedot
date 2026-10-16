@@ -94,7 +94,7 @@ class DemoReservationSeeder extends Seeder
             'service_ids' => [$service->id],
             'date' => $start->format('Y-m-d'),
             'start_time' => $start->format('H:i'),
-            'party_size' => $resource->type === 'space' ? mt_rand(2, 4) : 1,
+            'party_size' => $resource->type === 'space' ? mt_rand(2, min(4, $resource->max_party ?? 4)) : 1,
             'channel' => ['phone', 'phone', 'walk_in', 'online'][mt_rand(0, 3)],
             'status' => in_array($status, ['completed', 'confirmed', 'pending']) ? $status : 'confirmed',
         ]);

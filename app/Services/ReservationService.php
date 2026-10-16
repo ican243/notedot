@@ -30,6 +30,7 @@ class ReservationService
         return DB::transaction(function () use ($shop, $by, $data) {
             // 잠금은 트랜잭션의 맨 처음에 (아래 "왜 맨 처음?" 설명은 assertAvailable 주석 참고)
             $resource = $this->lockResource($shop, $data['resource_id'], mustBeActive: true);
+            $this->assertPartySize($resource, $data['party_size'] ?? 1);
             $customer = $this->customers->resolve($shop, $data['customer_id'] ?? null, $data['customer_name'] ?? null, $data['customer_phone'] ?? null);
             $services = $this->servicesFor($shop, $resource, $data['service_ids']);
             [$start, $end, $occupied] = $this->times($this->startAt($data), $services);
@@ -71,6 +72,7 @@ class ReservationService
             $customer = $this->customers->resolve($shop, $data['customer_id'] ?? null, $data['customer_name'] ?? null, $data['customer_phone'] ?? null);
             $resourceChanged = (int) $data['resource_id'] !== $reservation->resource_id;
             $resource = $this->lockResource($shop, $data['resource_id'], mustBeActive: $resourceChanged);
+            $this->assertPartySize($resource, $data['party_size'] ?? 1);
             $services = $this->servicesFor($shop, $resource, $data['service_ids']);
             [$start, $end, $occupied] = $this->times($this->startAt($data), $services);
 
@@ -207,6 +209,16 @@ class ReservationService
                     $c->occupied_until->format('H:i'),
                     $c->customer->name,
                 ),
+            ]);
+        }
+    }
+
+    // 인원이 resource 의 최대 인원(공간 크기)보다 많으면 거절. 최대 인원이 비어 있으면 제한 없음
+    private function assertPartySize(Resource $resource, int $partySize): void
+    {
+        if ($resource->max_party && $partySize > $resource->max_party) {
+            throw ValidationException::withMessages([
+                'party_size' => "{$resource->name}은(는) 최대 {$resource->max_party}명까지 예약할 수 있습니다.",
             ]);
         }
     }
