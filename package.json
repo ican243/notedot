@@ -12,6 +12,7 @@
         "@fullcalendar/timegrid": "^6.1.21",
         "@tailwindcss/vite": "^4.0.0",
         "alpinejs": "^3.17.4",
+        "chart.js": "^4.5.1",
         "concurrently": "^10.0.3",
         "laravel-vite-plugin": "^3.1",
         "socket.io-client": "^4.8.4",

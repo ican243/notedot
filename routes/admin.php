@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\ShopSettingController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\StatsController;
 use Illuminate\Support\Facades\Route;
 
 // 관리자 주소표 — bootstrap/app.php 에서 /admin 접두어, admin. 이름표를 붙여 불러온다
@@ -62,6 +63,9 @@ Route::middleware('auth:admin')->group(function () {
 
     // 대표만
     Route::middleware('owner')->group(function () {
+        // 통계 (매출이 들어 있어 대표만)
+        Route::get('stats', [StatsController::class, 'index'])->name('stats');
+
         // 알림 발송 기록
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/{notificationLog}/retry', [NotificationController::class, 'retry'])->name('notifications.retry');
