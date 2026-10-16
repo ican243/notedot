@@ -23,6 +23,7 @@ class CalendarController extends Controller
 
         $resources = $shop->resources()->whereIn('id', $visible)->with('services:id')->get();
         $services = $shop->services()->where('booking_type', '!=', 'group')->get();
+        $groupServices = $shop->services()->where('booking_type', 'group')->get();
         [$slotMin, $slotMax] = $this->calendar->visibleRange($shop);
 
         // 화면(JavaScript)에 넘길 설정 한 묶음
@@ -34,6 +35,11 @@ class CalendarController extends Controller
                 'move' => route('admin.reservations.move', '__ID__'),
                 'status' => route('admin.reservations.status', '__ID__'),
                 'customers' => route('admin.customers.search'),
+                'sessionStore' => route('admin.class-sessions.store'),
+                'session' => route('admin.class-sessions.show', '__ID__'),
+                'sessionMove' => route('admin.class-sessions.move', '__ID__'),
+                'sessionCancel' => route('admin.class-sessions.cancel', '__ID__'),
+                'sessionBook' => route('admin.class-sessions.book', '__ID__'),
             ],
             'resources' => $resources->map(fn ($r) => [
                 'id' => $r->id, 'name' => $r->name, 'type' => $r->type, 'maxParty' => $r->max_party, 'color' => $r->color, 'active' => $r->is_active,
@@ -43,13 +49,17 @@ class CalendarController extends Controller
                 'id' => $s->id, 'name' => $s->name, 'category' => $s->category,
                 'duration' => $s->duration_min, 'buffer' => $s->buffer_min, 'price' => $s->price, 'active' => $s->is_active,
             ]),
+            'groupServices' => $groupServices->map(fn ($s) => [
+                'id' => $s->id, 'name' => $s->name, 'duration' => $s->duration_min,
+                'capacity' => $s->capacity, 'price' => $s->price, 'active' => $s->is_active,
+            ]),
             'slotUnit' => $shop->slot_unit,
             'slotMin' => $slotMin,
             'slotMax' => $slotMax,
             'businessHours' => $this->calendar->businessHours($shop),
             'statuses' => Reservation::STATUSES,
             'channels' => Reservation::CHANNELS,
-            'labels' => ['resource' => term('resource'), 'service' => term('service'), 'customer' => term('customer')],
+            'labels' => ['resource' => term('resource'), 'service' => term('service'), 'customer' => term('customer'), 'group' => '그룹 '.term('service')],
         ];
 
         return view('admin.calendar', ['config' => $config, 'hasResources' => $resources->isNotEmpty()]);

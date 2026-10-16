@@ -1,6 +1,6 @@
 // 예약 캘린더 화면의 동작 (Alpine 부품)
 // - 캘린더 그리기: calendar-fc.js (FullCalendar)
-// - 이 파일: 담당자 필터, 예약 창(만들기/수정), 고객 검색, 상태 변경, 서버 통신
+// - 이 파일: 담당자 필터, 예약 창(만들기/수정), 그룹 일정 창(만들기/보기·신청), 고객 검색, 상태 변경, 서버 통신
 import { api } from './api';
 
 const STORAGE_KEY = 'notedot.calendar.resources';
@@ -28,6 +28,30 @@ function emptyForm() {
     };
 }
 
+// 화면 요일 순서 (월 ~ 일). value 는 서버와 같은 0=일 ~ 6=토
+const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0].map((value) => ({ value, label: '일월화수목금토'[value] }));
+
+function emptySessionForm() {
+    return {
+        resource_id: null,
+        service_id: null,
+        date: '',
+        start_time: '',
+        capacity: null,
+        memo: '',
+        repeat: false,
+        repeat_days: [],
+        repeat_weeks: 4,
+    };
+}
+
+// 지금 이후 가장 가까운 칸
+function nextSlot(unit) {
+    const d = new Date();
+    d.setMinutes(Math.ceil(d.getMinutes() / unit) * unit, 0, 0);
+    return d;
+}
+
 export default (config) => {
     // FullCalendar 객체는 Alpine 이 감시(반응형)하지 않도록 바깥 변수에 둔다
     let calendar = null;
@@ -48,6 +72,13 @@ export default (config) => {
         customerMode: 'search',  // search | new
         customerQuery: '',
         customerResults: [],
+
+        sessionOpen: false,
+        sessionMode: 'create',   // create | view
+        sessionForm: emptySessionForm(),
+        session: null,           // 보기 모드일 때 서버에서 받은 일정 (신청자, 이력)
+        sessionEdit: { capacity: 1, memo: '' },
+        weekdays: WEEKDAYS,
 
         toast: { show: false, text: '', error: false },
 
@@ -91,12 +122,7 @@ export default (config) => {
 
         // ── 예약 창 열기 ──────────────────────
         openCreate(start = null, end = null) {
-            if (!start) {
-                // "+ 예약" 버튼: 지금 이후 가장 가까운 칸
-                start = new Date();
-                const unit = this.config.slotUnit;
-                start.setMinutes(Math.ceil(start.getMinutes() / unit) * unit, 0, 0);
-            }
+            start ??= nextSlot(this.config.slotUnit);   // "+ 예약" 버튼: 지금 이후 가장 가까운 칸
             this.mode = 'create';
             this.detail = null;
             this.errors = {};
@@ -139,6 +165,152 @@ export default (config) => {
 
         close() {
             this.modalOpen = false;
+        },
+
+        // 캘린더 블록 클릭: 그룹 일정이면 일정 창, 아니면 예약 창
+        openEvent(event) {
+            const p = event.extendedProps;
+            if (p.kind === 'session') this.openSession(p.sessionId);
+            else this.openEdit(event.id);
+        },
+
+        // ── 그룹 일정 ─────────────────────────
+        get groupResources() {
+            const ids = this.config.groupServices.map((s) => s.id);
+            return this.config.resources.filter((r) => r.services.some((id) => ids.includes(id)));
+        },
+        get sessionServices() {
+            const ids = this.config.resources.find((r) => r.id === this.sessionForm.resource_id)?.services || [];
+            return this.config.groupServices.filter((s) => s.active && ids.includes(s.id));
+        },
+        get sessionService() {
+            return this.config.groupServices.find((s) => s.id === this.sessionForm.service_id) || null;
+        },
+        get sessionTimeOptions() {
+            const list = [];
+            for (let m = toMin(this.config.slotMin); m < toMin(this.config.slotMax); m += this.config.slotUnit) list.push(fromMin(m));
+            if (this.sessionForm.start_time && !list.includes(this.sessionForm.start_time)) list.unshift(this.sessionForm.start_time);
+            return list;
+        },
+        // 반복으로 만들어질 개수 (화면 안내용. 서버도 같은 규칙으로 계산)
+        get repeatCount() {
+            const f = this.sessionForm;
+            if (!f.repeat || !f.date) return 1;
+            const first = new Date(`${f.date}T00:00:00`);
+            let n = 0;
+            for (let i = 0; i < 7 * f.repeat_weeks; i++) {
+                const d = new Date(first);
+                d.setDate(first.getDate() + i);
+                if (f.repeat_days.includes(d.getDay())) n++;
+            }
+            return n;
+        },
+
+        openSessionCreate(date = null, time = null, resourceId = null) {
+            const slot = nextSlot(this.config.slotUnit);
+            const list = this.groupResources;
+            const rid = list.some((r) => r.id === resourceId) ? resourceId
+                : (list.find((r) => this.selected.includes(r.id))?.id ?? list[0]?.id ?? null);
+
+            this.modalOpen = false;
+            this.sessionMode = 'create';
+            this.session = null;
+            this.errors = {};
+            this.sessionForm = { ...emptySessionForm(), resource_id: rid, date: date || ymd(slot), start_time: time || hm(slot) };
+            this.onSessionResourceChange();
+            this.sessionOpen = true;
+        },
+        onSessionResourceChange() {
+            const list = this.sessionServices;
+            if (!list.some((s) => s.id === this.sessionForm.service_id)) this.sessionForm.service_id = list[0]?.id ?? null;
+        },
+        onRepeatToggle() {
+            // 반복을 켜면 시작일의 요일을 먼저 골라 둔다
+            if (this.sessionForm.repeat && !this.sessionForm.repeat_days.length && this.sessionForm.date) {
+                this.sessionForm.repeat_days = [new Date(`${this.sessionForm.date}T00:00:00`).getDay()];
+            }
+        },
+        toggleRepeatDay(value) {
+            const days = this.sessionForm.repeat_days;
+            this.sessionForm.repeat_days = days.includes(value) ? days.filter((d) => d !== value) : [...days, value];
+        },
+        async submitSession() {
+            const f = this.sessionForm;
+            const body = {
+                resource_id: f.resource_id,
+                service_id: f.service_id,
+                date: f.date,
+                start_time: f.start_time,
+                capacity: f.capacity || null,
+                memo: f.memo,
+                repeat_days: f.repeat ? f.repeat_days : [],
+                repeat_weeks: f.repeat ? f.repeat_weeks : null,
+            };
+            await this.send(() => api('POST', this.config.urls.sessionStore, body), () => this.closeSession());
+        },
+
+        async openSession(id) {
+            try {
+                const s = await api('GET', this.url('session', id));
+                this.session = s;
+                this.sessionMode = 'view';
+                this.sessionEdit = { capacity: s.capacity, memo: s.memo ?? '' };
+                this.errors = {};
+                this.form = emptyForm();          // 신청 추가 칸 (고객 고르기 부품이 form 을 쓴다)
+                this.resetCustomerSearch();
+                this.modalOpen = false;
+                this.sessionOpen = true;
+            } catch (e) {
+                this.notify(e.message, true);
+            }
+        },
+        closeSession() {
+            this.sessionOpen = false;
+        },
+        async saveSession() {
+            const id = this.session.id;
+            await this.send(() => api('PUT', this.url('session', id), this.sessionEdit), () => this.openSession(id));
+        },
+        async addAttendee() {
+            const id = this.session.id;
+            const f = this.form;
+            const body = {
+                customer_id: f.customer_id,
+                customer_name: f.customer_id ? null : f.customer_name,
+                customer_phone: f.customer_id ? null : f.customer_phone,
+                party_size: f.party_size,
+                channel: f.channel,
+            };
+            await this.send(() => api('POST', this.url('sessionBook', id), body), () => this.openSession(id));
+        },
+        async attendeeStatus(a, status) {
+            const reason = status === 'canceled' ? window.prompt('취소 사유 (선택)', '') : null;
+            if (status === 'canceled' && reason === null) return;
+            const id = this.session.id;
+            await this.send(() => api('PATCH', this.url('status', a.id), { status, reason }), () => this.openSession(id));
+        },
+        async cancelSession() {
+            const reason = window.prompt('일정을 취소하면 대기·확정 신청도 모두 취소됩니다. 사유 (선택)', '');
+            if (reason === null) return;
+            const id = this.session.id;
+            await this.send(() => api('PATCH', this.url('sessionCancel', id), { reason }), () => this.openSession(id));
+        },
+
+        // 저장 공통: 보내기 → 알림 → 캘린더 새로고침 → 다음 할 일. 실패하면 오류 표시
+        async send(request, then) {
+            this.saving = true;
+            this.errors = {};
+            try {
+                const res = await request();
+                this.notify(res.message);
+                calendar?.refetchEvents();
+                await then?.();
+            } catch (e) {
+                this.errors = e.errors || {};
+                this.notify(e.message, true);
+            } finally {
+                this.saving = false;
+            }
         },
 
         // ── 고객 ──────────────────────────────
@@ -246,8 +418,10 @@ export default (config) => {
 
         // 드래그로 옮긴 직후: 서버가 거절하면 원래 자리로 되돌린다
         async moveEvent(info) {
+            const p = info.event.extendedProps;
+            const url = p.kind === 'session' ? this.url('sessionMove', p.sessionId) : this.url('move', info.event.id);
             try {
-                const res = await api('PATCH', this.url('move', info.event.id), { start: info.event.startStr });
+                const res = await api('PATCH', url, { start: info.event.startStr });
                 this.notify(res.message);
             } catch (e) {
                 info.revert();
@@ -269,7 +443,7 @@ export default (config) => {
         },
         logText(changes) {
             if (!changes) return '';
-            const names = { start_at: '시간', resource: this.config.labels.resource, services: this.config.labels.service, customer: this.config.labels.customer, status: '상태', party_size: '인원', channel: '경로', customer_request: '요청사항', staff_memo: '메모', cancel_reason: '취소 사유' };
+            const names = { capacity: '정원', memo: '메모', start_at: '시간', resource: this.config.labels.resource, services: this.config.labels.service, customer: this.config.labels.customer, status: '상태', party_size: '인원', channel: '경로', customer_request: '요청사항', staff_memo: '메모', cancel_reason: '취소 사유' };
             return Object.entries(changes).map(([k, [a, b]]) => {
                 const label = names[k] || k;
                 if (k === 'status') return `${label}: ${this.config.statuses[a] ?? a} → ${this.config.statuses[b] ?? b}`;

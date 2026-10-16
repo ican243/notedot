@@ -2,14 +2,16 @@
 
 namespace Database\Seeders;
 
+use App\Models\ClassSession;
 use App\Models\Resource;
 use App\Models\Shop;
 use App\Services\ReservationService;
 use App\Services\ScheduleService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
+use Illuminate\Validation\ValidationException;
 
-// 데모 매장마다 고객 14명 + 지난 5일 ~ 앞으로 9일 예약을 근무표 안에서 채운다
+// 데모 매장마다 고객 14명 + 지난 5일 ~ 앞으로 9일 예약을 근무표 안에서 채운다 + 그룹 일정 신청자
 // 실제 화면과 같은 ReservationService 로 만들기 때문에 겹치는 예약은 생기지 않는다
 class DemoReservationSeeder extends Seeder
 {
@@ -40,6 +42,31 @@ class DemoReservationSeeder extends Seeder
             $date = $today->addDays($offset);
             foreach ($shop->resources()->with('services')->get() as $resource) {
                 $this->fillDay($shop, $owner, $resource, $date, $customers);
+            }
+        }
+
+        $shop->classSessions()->orderBy('start_at')->get()->each(fn (ClassSession $s) => $this->fillSession($s, $owner, $customers));
+    }
+
+    // 그룹 일정마다 2명 ~ 정원까지 신청 (고객이 겹치지 않게)
+    private function fillSession(ClassSession $session, $owner, $customers): void
+    {
+        $picked = $customers->sortBy(fn () => mt_rand())->take(mt_rand(2, $session->capacity));
+        $past = $session->start_at->isPast();
+
+        foreach ($picked as $customer) {
+            $roll = mt_rand(1, 100);
+            $status = $past
+                ? ($roll <= 85 ? 'completed' : ($roll <= 93 ? 'no_show' : 'canceled'))
+                : ($roll <= 90 ? 'confirmed' : ($roll <= 95 ? 'pending' : 'canceled'));
+
+            $reservation = $this->reservations->bookSession($session, $owner, [
+                'customer_id' => $customer->id,
+                'channel' => ['phone', 'online', 'online', 'walk_in'][mt_rand(0, 3)],
+                'status' => in_array($status, ['completed', 'confirmed', 'pending']) ? $status : 'confirmed',
+            ]);
+            if (in_array($status, ['no_show', 'canceled'])) {
+                $this->reservations->changeStatus($reservation, $owner, $status, $status === 'canceled' ? '고객 요청' : null);
             }
         }
     }
@@ -73,14 +100,19 @@ class DemoReservationSeeder extends Seeder
                     continue;
                 }
 
-                $this->book($shop, $owner, $resource, $service, $t, $customers);
+                if (! $this->book($shop, $owner, $resource, $service, $t, $customers)) {
+                    $t = $t->addMinutes($unit);   // 그룹 일정과 겹치면 한 칸 뒤로
+
+                    continue;
+                }
                 $next = $service->duration_min + $service->buffer_min;
                 $t = $t->addMinutes((int) ceil($next / $unit) * $unit);
             }
         }
     }
 
-    private function book(Shop $shop, $owner, Resource $resource, $service, CarbonImmutable $start, $customers): void
+    // 만들었으면 true, 그룹 일정 등과 겹쳐서 못 만들면 false
+    private function book(Shop $shop, $owner, Resource $resource, $service, CarbonImmutable $start, $customers): bool
     {
         $past = $start->isPast();
         $roll = mt_rand(1, 100);
@@ -88,20 +120,26 @@ class DemoReservationSeeder extends Seeder
             ? ($roll <= 85 ? 'completed' : ($roll <= 90 ? 'no_show' : 'canceled'))
             : ($roll <= 85 ? 'confirmed' : ($roll <= 95 ? 'pending' : 'canceled'));
 
-        $reservation = $this->reservations->create($shop, $owner, [
-            'customer_id' => $customers[mt_rand(0, $customers->count() - 1)]->id,
-            'resource_id' => $resource->id,
-            'service_ids' => [$service->id],
-            'date' => $start->format('Y-m-d'),
-            'start_time' => $start->format('H:i'),
-            'party_size' => $resource->type === 'space' ? mt_rand(2, min(4, $resource->max_party ?? 4)) : 1,
-            'channel' => ['phone', 'phone', 'walk_in', 'online'][mt_rand(0, 3)],
-            'status' => in_array($status, ['completed', 'confirmed', 'pending']) ? $status : 'confirmed',
-        ]);
+        try {
+            $reservation = $this->reservations->create($shop, $owner, [
+                'customer_id' => $customers[mt_rand(0, $customers->count() - 1)]->id,
+                'resource_id' => $resource->id,
+                'service_ids' => [$service->id],
+                'date' => $start->format('Y-m-d'),
+                'start_time' => $start->format('H:i'),
+                'party_size' => $resource->type === 'space' ? mt_rand(2, min(4, $resource->max_party ?? 4)) : 1,
+                'channel' => ['phone', 'phone', 'walk_in', 'online'][mt_rand(0, 3)],
+                'status' => in_array($status, ['completed', 'confirmed', 'pending']) ? $status : 'confirmed',
+            ]);
+        } catch (ValidationException) {
+            return false;
+        }
 
         // 노쇼·취소는 실제 화면과 같은 방법(상태 변경)으로 → 노쇼 횟수도 올라간다
         if (in_array($status, ['no_show', 'canceled'])) {
             $this->reservations->changeStatus($reservation, $owner, $status, $status === 'canceled' ? '고객 요청' : null);
         }
+
+        return true;
     }
 }

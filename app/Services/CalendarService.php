@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\ClassSession;
 use App\Models\Reservation;
 use App\Models\Shop;
 use App\Models\Staff;
 use Carbon\CarbonImmutable;
 
-// 캘린더 화면용 데이터: 기간 안의 예약을 FullCalendar 이벤트 모양으로, 영업시간을 캘린더 설정 모양으로
+// 캘린더 화면용 데이터: 기간 안의 예약·그룹 일정을 FullCalendar 이벤트 모양으로, 영업시간을 캘린더 설정 모양으로
 class CalendarService
 {
     public function events(Shop $shop, Staff $staff, CarbonImmutable $from, CarbonImmutable $to, array $resourceIds, bool $withCanceled): array
@@ -15,7 +16,17 @@ class CalendarService
         // 직원은 자기 resource 만 (대표는 전부)
         $ids = array_values(array_intersect($resourceIds, $staff->visibleResourceIds()));
 
+        return [
+            ...$this->reservationEvents($shop, $ids, $from, $to, $withCanceled),
+            ...$this->sessionEvents($shop, $ids, $from, $to, $withCanceled),
+        ];
+    }
+
+    // 1:1·공간 예약 (그룹 신청은 일정 블록 하나로 묶어서 보이므로 뺀다)
+    private function reservationEvents(Shop $shop, array $ids, CarbonImmutable $from, CarbonImmutable $to, bool $withCanceled): array
+    {
         return $shop->reservations()
+            ->individual()
             ->whereIn('resource_id', $ids)
             ->where('start_at', '<', $to)
             ->where('end_at', '>', $from)
@@ -33,10 +44,45 @@ class CalendarService
                 'classNames' => ['ev-'.$r->status],
                 'editable' => $r->status !== 'canceled',
                 'extendedProps' => [
+                    'kind' => 'reservation',
                     'status' => $r->status,
                     'statusLabel' => Reservation::STATUSES[$r->status],
                     'resource' => $r->resource->name,
                     'services' => $r->items->pluck('service_name')->implode(', '),
+                ],
+            ])
+            ->all();
+    }
+
+    // 그룹 일정: 블록 하나에 "신청 인원/정원"
+    private function sessionEvents(Shop $shop, array $ids, CarbonImmutable $from, CarbonImmutable $to, bool $withCanceled): array
+    {
+        return $shop->classSessions()
+            ->whereIn('resource_id', $ids)
+            ->where('start_at', '<', $to)
+            ->where('end_at', '>', $from)
+            ->when(! $withCanceled, fn ($q) => $q->active())
+            ->with(['service', 'resource'])
+            ->withSum(['reservations as taken' => fn ($q) => $q->occupying()], 'party_size')
+            ->orderBy('start_at')
+            ->get()
+            ->map(fn (ClassSession $s) => [
+                'id' => 's'.$s->id,
+                'title' => $s->service->name,
+                'start' => $s->start_at->format('Y-m-d\TH:i:s'),
+                'end' => $s->end_at->format('Y-m-d\TH:i:s'),
+                'backgroundColor' => $s->resource->color,
+                'borderColor' => $s->resource->color,
+                'classNames' => ['ev-session', $s->isCanceled() ? 'ev-canceled' : ''],
+                'editable' => ! $s->isCanceled(),
+                'extendedProps' => [
+                    'kind' => 'session',
+                    'sessionId' => $s->id,
+                    'status' => $s->isCanceled() ? 'canceled' : 'confirmed',
+                    'statusLabel' => '취소',
+                    'resource' => $s->resource->name,
+                    'taken' => (int) $s->taken,
+                    'capacity' => $s->capacity,
                 ],
             ])
             ->all();

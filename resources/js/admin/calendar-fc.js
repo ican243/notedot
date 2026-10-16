@@ -36,7 +36,7 @@ export function mountCalendar(el, page) {
             calendar.unselect();
             page.openCreate(info.start, info.end);
         },
-        eventClick: (info) => page.openEdit(info.event.id),
+        eventClick: (info) => page.openEvent(info.event),
         eventDrop: (info) => page.moveEvent(info),
         eventContent: renderEvent,
     });
@@ -46,7 +46,7 @@ export function mountCalendar(el, page) {
     return calendar;
 }
 
-// 예약 블록 안 내용. 고객 이름 등은 textContent 로 넣어서 HTML 로 해석되지 않게 한다 (XSS 방지)
+// 예약·일정 블록 안 내용. 고객 이름 등은 textContent 로 넣어서 HTML 로 해석되지 않게 한다 (XSS 방지)
 function renderEvent(arg) {
     const p = arg.event.extendedProps;
     const wrap = document.createElement('div');
@@ -61,7 +61,11 @@ function renderEvent(arg) {
 
     line(arg.timeText + (p.status !== 'confirmed' ? ` · ${p.statusLabel}` : ''), 'ev-time');
     line(arg.event.title, 'ev-title');
-    line(p.services, 'ev-sub');
+    if (p.kind === 'session') {
+        line(`${p.taken}/${p.capacity}명` + (p.taken >= p.capacity ? ' 마감' : ''), 'ev-sub');   // 그룹 일정: 신청 인원/정원
+    } else {
+        line(p.services, 'ev-sub');
+    }
 
     return { domNodes: [wrap] };
 }

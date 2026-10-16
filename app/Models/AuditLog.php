@@ -15,6 +15,7 @@ class AuditLog extends Model
         'updated' => '수정',
         'moved' => '시간 이동',
         'status_changed' => '상태 변경',
+        'canceled' => '일정 취소',
     ];
 
     protected $fillable = ['shop_id', 'staff_id', 'action', 'target_type', 'target_id', 'changes', 'ip'];

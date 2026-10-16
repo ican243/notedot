@@ -57,6 +57,12 @@ class Reservation extends Model
         return $this->belongsTo(Resource::class)->withTrashed();
     }
 
+    // 그룹 일정 신청이면 그 일정 (1:1·공간 예약은 null)
+    public function classSession(): BelongsTo
+    {
+        return $this->belongsTo(ClassSession::class)->withTrashed();
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(ReservationItem::class);
@@ -66,6 +72,12 @@ class Reservation extends Model
     public function scopeOccupying(Builder $query): void
     {
         $query->where('status', '!=', 'canceled');
+    }
+
+    // 1:1·공간 예약만 (그룹 일정 신청 제외) — 그룹 신청은 일정 정원으로 따로 센다
+    public function scopeIndividual(Builder $query): void
+    {
+        $query->whereNull('class_session_id');
     }
 
     // [from, to) 구간과 겹치는 예약: 기존.시작 < 새.끝 AND 기존.끝 > 새.시작

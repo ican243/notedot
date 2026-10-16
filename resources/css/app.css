@@ -149,6 +149,7 @@ body {
 .fc .ev-completed { opacity: .6; }
 .fc .ev-no_show { outline: 2px solid var(--st-noshow); outline-offset: -2px; opacity: .7; }
 .fc .ev-canceled { opacity: .35; }
+.fc .ev-session { box-shadow: inset 4px 0 0 rgba(0,0,0,.28); }
 .fc .ev-canceled .ev-title { text-decoration: line-through; }
 
 /* 상태 배지 (계절 무관 고정 색) */

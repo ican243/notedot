@@ -7,6 +7,8 @@
 <div x-data="calendarPage(@js($config))">
     <x-admin.page-header title="예약 캘린더" :sub="'빈 칸을 끌어서 새 예약, 예약을 끌어서 시간 이동'">
         @if ($hasResources)
+            <button type="button" class="btn-line" x-show="groupResources.length" @click="openSessionCreate()"
+                    x-text="'+ ' + config.labels.group + ' 일정'"></button>
             <button type="button" class="btn-main" @click="openCreate()">+ 예약</button>
         @endif
     </x-admin.page-header>
@@ -42,6 +44,7 @@
 
         {{-- 상태 범례 --}}
         <div class="mt-3 flex flex-wrap gap-3 text-xs text-sub">
+            <span x-show="groupResources.length">굵은 왼쪽 선 = 그룹 일정 (신청 인원/정원)</span>
             <span>테두리 점선 = 대기</span><span>흐림 = 완료</span><span>빨간 테두리 = 노쇼</span><span>줄 긋기 = 취소</span>
         </div>
     @endunless
@@ -81,48 +84,19 @@
                 </div>
             </template>
 
+            {{-- 같은 칸에 그룹 일정을 만들고 싶을 때 --}}
+            <template x-if="mode === 'create' && groupResources.length">
+                <p class="-mt-2 mb-4 text-sm text-sub">
+                    정원제로 받으려면
+                    <button type="button" class="underline" @click="openSessionCreate(form.date, form.start_time, form.resource_id)"
+                            x-text="config.labels.group + ' 일정 만들기'"></button>
+                </p>
+            </template>
+
             <form @submit.prevent="submit()" class="space-y-5">
                 <fieldset :disabled="detail && detail.status === 'canceled'" class="space-y-5">
                 {{-- 고객 --}}
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium">{{ term('customer') }}</label>
-
-                    <template x-if="form.customer_id">
-                        <div class="flex items-center justify-between rounded-lg border border-line px-3 py-2.5">
-                            <span x-text="form.customer_label"></span>
-                            <button type="button" class="text-sm text-sub underline" @click="clearCustomer()">변경</button>
-                        </div>
-                    </template>
-
-                    <template x-if="!form.customer_id">
-                        <div class="space-y-2">
-                            <div class="flex gap-1 text-sm">
-                                <button type="button" class="rounded-lg px-3 py-1.5" :class="customerMode === 'search' ? 'bg-text text-white' : 'bg-bg'" @click="customerMode = 'search'">기존 {{ term('customer') }} 찾기</button>
-                                <button type="button" class="rounded-lg px-3 py-1.5" :class="customerMode === 'new' ? 'bg-text text-white' : 'bg-bg'" @click="customerMode = 'new'">새 {{ term('customer') }}</button>
-                            </div>
-                            <div x-show="customerMode === 'search'" class="relative">
-                                <input type="text" class="input" placeholder="이름 또는 전화번호 뒷자리"
-                                       x-model="customerQuery" @input.debounce.250ms="searchCustomers()">
-                                <ul x-show="customerResults.length" class="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-line bg-card shadow-lg">
-                                    <template x-for="c in customerResults" :key="c.id">
-                                        <li>
-                                            <button type="button" class="flex w-full justify-between px-3 py-2 text-left text-sm hover:bg-bg" @click="pickCustomer(c)">
-                                                <span x-text="c.name" class="font-medium"></span>
-                                                <span class="text-sub" x-text="c.phone + (c.no_show_count ? ' · 노쇼 ' + c.no_show_count : '')"></span>
-                                            </button>
-                                        </li>
-                                    </template>
-                                </ul>
-                            </div>
-                            <div x-show="customerMode === 'new'" class="grid gap-2 sm:grid-cols-2">
-                                <input type="text" class="input" placeholder="이름" x-model="form.customer_name">
-                                <input type="tel" class="input" placeholder="010-1234-5678" x-model="form.customer_phone">
-                            </div>
-                        </div>
-                    </template>
-                    <p class="text-sm text-st-noshow" x-show="err('customer_name') || err('customer_phone') || err('customer_id')"
-                       x-text="err('customer_name') || err('customer_phone') || err('customer_id')"></p>
-                </div>
+                @include('admin.calendar.customer-picker')
 
                 {{-- 담당 + 날짜/시간 --}}
                 <div class="grid gap-4 sm:grid-cols-3">
@@ -225,6 +199,8 @@
             </template>
         </div>
     </div>
+
+    @include('admin.calendar.session-modal')
 
     {{-- 알림 --}}
     <div x-show="toast.show" x-cloak

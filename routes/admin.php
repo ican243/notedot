@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\CalendarController;
+use App\Http\Controllers\Admin\ClassSessionController;
 use App\Http\Controllers\Admin\CustomerSearchController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ReservationController;
@@ -36,6 +37,14 @@ Route::middleware('auth:admin')->group(function () {
     Route::put('reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
     Route::patch('reservations/{reservation}/move', [ReservationController::class, 'move'])->name('reservations.move');
     Route::patch('reservations/{reservation}/status', [ReservationController::class, 'status'])->name('reservations.status');
+
+    // 그룹 일정 (정원제) — 일정 만들기·수정·이동·취소, 신청자 추가
+    Route::post('class-sessions', [ClassSessionController::class, 'store'])->name('class-sessions.store');
+    Route::get('class-sessions/{classSession}', [ClassSessionController::class, 'show'])->name('class-sessions.show');
+    Route::put('class-sessions/{classSession}', [ClassSessionController::class, 'update'])->name('class-sessions.update');
+    Route::patch('class-sessions/{classSession}/move', [ClassSessionController::class, 'move'])->name('class-sessions.move');
+    Route::patch('class-sessions/{classSession}/cancel', [ClassSessionController::class, 'cancel'])->name('class-sessions.cancel');
+    Route::post('class-sessions/{classSession}/reservations', [ClassSessionController::class, 'book'])->name('class-sessions.book');
 
     // 대표만
     Route::middleware('owner')->group(function () {
