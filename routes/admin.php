@@ -43,7 +43,7 @@ Route::middleware('auth:admin')->group(function () {
         Route::put('settings/shop', [ShopSettingController::class, 'update'])->name('settings.shop.update');
 
         // resource: 주소 7개(목록·추가·저장·수정·갱신·삭제)를 한 줄로 — show 는 안 씀
-        Route::resource('staffs', StaffController::class)->except('show');
+        Route::resource('staffs', StaffController::class)->except('show')->middleware('demo');
         Route::resource('resources', ResourceController::class)->except('show');
         Route::resource('services', ServiceController::class)->except('show');
 

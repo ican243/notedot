@@ -1,8 +1,11 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// 예약 작업표 — 서버 cron 이 1분마다 php artisan schedule:run 을 부르면, 시각이 맞는 작업을 실행한다
+
+// 데모 모드면 매일 새벽 데모 데이터 초기화
+Schedule::command('demo:reset')
+    ->dailyAt(config('demo.reset_at'))
+    ->when(fn () => config('demo.enabled'))
+    ->withoutOverlapping();

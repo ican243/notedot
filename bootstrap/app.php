@@ -25,8 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // 라우트에서 ->middleware('owner') 로 쓰는 이름표
-        $middleware->alias(['owner' => \App\Http\Middleware\EnsureOwner::class]);
+        // 라우트에서 ->middleware('owner'), ->middleware('demo') 로 쓰는 이름표
+        $middleware->alias([
+            'owner' => \App\Http\Middleware\EnsureOwner::class,
+            'demo' => \App\Http\Middleware\DemoGuard::class,
+        ]);
 
         // 로그인이 필요한 곳에 손님이 오면 보낼 곳
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('s/*')

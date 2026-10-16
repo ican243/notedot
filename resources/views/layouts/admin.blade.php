@@ -48,6 +48,9 @@
         <div class="flex min-w-0 flex-col">
             {{-- 위쪽 바 --}}
             <header class="flex items-center justify-end gap-3 border-b border-line bg-card px-5 py-3">
+                @if (config('demo.enabled'))
+                    <span class="badge mr-auto">데모 · 매일 {{ config('demo.reset_at') }} 초기화</span>
+                @endif
                 <span class="text-sm text-sub">{{ $me->name }} · {{ $me->isOwner() ? '대표' : '직원' }}</span>
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
@@ -60,6 +63,11 @@
                     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
                          class="mb-5 rounded-lg border border-line bg-card px-4 py-3 text-sm">
                         {{ session('status') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="mb-5 rounded-lg border border-st-noshow bg-card px-4 py-3 text-sm text-st-noshow">
+                        {{ session('error') }}
                     </div>
                 @endif
                 @yield('content')
