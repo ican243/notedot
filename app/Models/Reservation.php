@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 // 예약
@@ -69,6 +70,17 @@ class Reservation extends Model
     }
 
     // 자리를 차지하고 있는 예약 (취소만 자리를 비운다)
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    // 가장 최근 결제 (보증금)
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class)->latestOfMany();
+    }
+
     public function scopeOccupying(Builder $query): void
     {
         $query->where('status', '!=', 'canceled');

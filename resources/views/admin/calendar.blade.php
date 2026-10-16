@@ -92,6 +92,19 @@
                         <span class="text-sub" x-text="'포인트 ' + detail.customer.points.toLocaleString('ko-KR') + 'P'"></span>
                     </div>
                     @include('admin.calendar.pass-box', ['src' => 'detail'])
+                    {{-- 보증금 결제 --}}
+                    <template x-if="detail.payment">
+                        <div class="flex flex-wrap items-center gap-2 border-t border-line pt-2 text-sm">
+                            <span class="font-medium" x-text="'보증금 ' + won(detail.payment.amount)"></span>
+                            <span class="badge" x-text="detail.payment.label"></span>
+                            <span class="text-sub" x-show="detail.payment.paid_at" x-text="detail.payment.paid_at + ' 결제'"></span>
+                            <span class="text-sub" x-show="detail.payment.due_at" x-text="detail.payment.due_at + '까지 결제 대기'"></span>
+                            <span class="text-sub" x-show="detail.payment.refunded" x-text="won(detail.payment.refunded) + ' 환불'"></span>
+                            <span class="text-st-noshow" x-show="detail.payment.failed_reason" x-text="detail.payment.failed_reason"></span>
+                            <a class="text-sub underline" x-show="detail.payment.receipt_url" :href="detail.payment.receipt_url" target="_blank" rel="noopener">영수증</a>
+                            <button type="button" class="btn-line ml-auto px-2 py-1 text-xs" x-show="config.isOwner && detail.payment.refundable" @click="refundOnly()">환불</button>
+                        </div>
+                    </template>
                 </div>
             </template>
 

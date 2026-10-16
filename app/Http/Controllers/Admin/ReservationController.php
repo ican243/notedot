@@ -9,14 +9,16 @@ use App\Http\Requests\Admin\ReservationStatusRequest;
 use App\Models\AuditLog;
 use App\Models\Reservation;
 use App\Services\PassService;
+use App\Services\PaymentService;
 use App\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 // 캘린더에서 쓰는 예약 API (모두 JSON). 실제 일은 ReservationService 가 한다
 class ReservationController extends Controller
 {
-    public function __construct(private ReservationService $reservations) {}
+    public function __construct(private ReservationService $reservations, private PaymentService $payments) {}
 
     public function store(ReservationRequest $request): JsonResponse
     {
@@ -48,6 +50,7 @@ class ReservationController extends Controller
                 'url' => route('admin.customers.show', $reservation->customer),
             ],
             'passes' => $passes->summaryFor($reservation),
+            'payment' => $this->payments->summaryFor($reservation),
             'resource_id' => $reservation->resource_id,
             'service_ids' => $reservation->items->pluck('service_id'),
             'items' => $reservation->items->map->only('service_name', 'duration_min', 'price'),
@@ -95,9 +98,43 @@ class ReservationController extends Controller
     {
         $this->authorizeResource($request, $reservation);
 
-        $this->reservations->changeStatus($reservation, $request->user('admin'), $request->input('status'), $request->input('reason'));
+        $staff = $request->user('admin');
+        $refund = (int) $request->input('refund_amount');
+        abort_if($refund > 0 && ! $staff->isOwner(), 403);   // 돈을 돌려주는 일은 대표만
 
-        return response()->json(['message' => Reservation::STATUSES[$request->input('status')].'(으)로 바꿨습니다.']);
+        $this->reservations->changeStatus($reservation, $staff, $request->input('status'), $request->input('reason'));
+        $message = Reservation::STATUSES[$request->input('status')].'(으)로 바꿨습니다.';
+
+        // 취소하면서 보증금 환불. 예약 취소는 이미 끝났으므로, 환불이 실패하면 알려 주고 따로 다시 시도하게 한다
+        if ($request->input('status') === 'canceled' && $refund > 0 && $reservation->payment) {
+            try {
+                $this->payments->refund($reservation->payment, $staff, $refund, $request->input('reason') ?: '예약 취소');
+                $message .= ' 보증금 '.number_format($refund).'원을 환불했습니다.';
+            } catch (ValidationException $e) {
+                return response()->json(['message' => '예약은 취소했지만 '.collect($e->errors())->flatten()->first(), 'warning' => true]);
+            }
+        }
+
+        return response()->json(['message' => $message]);
+    }
+
+    // 보증금 환불만 따로 (대표만)
+    public function refund(Request $request, Reservation $reservation): JsonResponse
+    {
+        $this->authorizeResource($request, $reservation);
+        abort_unless($request->user('admin')->isOwner(), 403);
+        $data = $request->validate([
+            'amount' => ['required', 'integer', 'min:1'],
+            'reason' => ['nullable', 'string', 'max:200'],
+        ]);
+        $payment = $reservation->payment;
+        if (! $payment) {
+            throw ValidationException::withMessages(['amount' => '결제 기록이 없습니다.']);
+        }
+
+        $this->payments->refund($payment, $request->user('admin'), $data['amount'], ($data['reason'] ?? null) ?: '매장 환불');
+
+        return response()->json(['message' => number_format($data['amount']).'원을 환불했습니다.']);
     }
 
     // 직원은 자기 resource 의 예약만

@@ -327,6 +327,27 @@ export default (config) => {
             await this.send(() => api('PATCH', this.url('sessionCancel', id), { reason }), () => this.openSession(id));
         },
 
+        // ── 보증금 환불 (대표만) ───────────────
+        // 취소 규정으로 계산한 금액을 기본값으로 묻는다. 반환: 금액(0 = 환불 안 함) / false = 창에서 취소
+        askRefund() {
+            const p = this.detail?.payment;
+            if (!p || !p.refundable || !this.config.isOwner) return null;
+            const s = p.suggest;
+            const input = window.prompt(
+                `보증금 환불 금액 (원)\n취소 규정 ${s.percent}%: ${this.won(s.amount)} / 매장 사정이면 전액 ${this.won(p.refundable)}\n0 이면 환불하지 않습니다.`,
+                String(s.amount),
+            );
+            if (input === null) return false;
+            const n = Number(input.replace(/[^0-9]/g, ''));
+            return Number.isFinite(n) ? n : 0;
+        },
+        async refundOnly() {
+            const amount = this.askRefund();
+            if (!amount) return;
+            const id = this.detail.id;
+            await this.send(() => api('POST', this.url('refund', id), { amount }), () => this.openEdit(id));
+        },
+
         // ── 회원권 (예약 창·일정 창 공용) ────────
         async usePass(reservationId, passId) {
             await this.send(() => api('POST', this.url('reservationPass', reservationId), { pass_id: Number(passId) }), () => this.reopen());
@@ -446,13 +467,16 @@ export default (config) => {
 
         async changeStatus(status) {
             let reason = null;
+            let refund = null;
             if (status === 'canceled') {
                 reason = window.prompt('취소 사유 (선택)', '');
                 if (reason === null) return;   // 창에서 "취소"를 누르면 아무것도 안 함
+                refund = this.askRefund();
+                if (refund === false) return;
             }
             try {
-                const res = await api('PATCH', this.url('status', this.detail.id), { status, reason });
-                this.notify(res.message);
+                const res = await api('PATCH', this.url('status', this.detail.id), { status, reason, refund_amount: refund });
+                this.notify(res.message, !!res.warning);
                 calendar.refetchEvents();
                 await this.openEdit(this.detail.id);   // 창의 상태·이력 새로고침
             } catch (e) {

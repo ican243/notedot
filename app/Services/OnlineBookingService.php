@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Models\Shop;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 // 고객이 예약 화면에서 직접 하는 예약. 화면이 보낸 시각을 믿지 않고 SlotService 로 다시 확인한 뒤 ReservationService 로 저장한다
@@ -16,6 +17,7 @@ class OnlineBookingService
     public function __construct(
         private SlotService $slots,
         private ReservationService $reservations,
+        private PaymentService $payments,
     ) {}
 
     /**
@@ -29,18 +31,25 @@ class OnlineBookingService
             'customer_phone' => $data['customer_phone'],
             'party_size' => $data['party_size'] ?? 1,
             'channel' => 'online',
-            // 보증금이 있는 상품은 결제 전까지 "대기" (결제는 Phase 7)
+            // 보증금이 있는 상품은 결제 전까지 "대기" → 결제가 확인되면 확정
             'status' => $service->deposit > 0 ? 'pending' : 'confirmed',
             'customer_request' => $data['customer_request'] ?? null,
         ];
 
-        $reservation = $service->booking_type === 'group'
-            ? $this->bookSession($shop, $service, $data, $common)
-            : $this->bookTime($shop, $service, $data, $common);
+        return DB::transaction(function () use ($shop, $service, $data, $common) {
+            $reservation = $service->booking_type === 'group'
+                ? $this->bookSession($shop, $service, $data, $common)
+                : $this->bookTime($shop, $service, $data, $common);
 
-        $this->saveConsents($reservation, (bool) ($data['marketing'] ?? false));
+            $this->saveConsents($reservation, (bool) ($data['marketing'] ?? false));
 
-        return $reservation;
+            // 보증금이 있으면 결제 대기를 만든다. hold_minutes 안에 결제하지 않으면 예약이 자동 취소된다
+            if ($reservation->deposit > 0) {
+                $this->payments->start($reservation);
+            }
+
+            return $reservation;
+        });
     }
 
     // 고객 화면에 보여 줄 resource: 예약을 받는 중이고 이 상품을 담당

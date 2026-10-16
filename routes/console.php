@@ -9,3 +9,8 @@ Schedule::command('demo:reset')
     ->dailyAt(config('demo.reset_at'))
     ->when(fn () => config('demo.enabled'))
     ->withoutOverlapping();
+
+// 보증금 결제 대기 시간이 지난 예약 자동 취소 (자리 풀기)
+Schedule::command('payments:expire')
+    ->everyMinute()
+    ->withoutOverlapping();

@@ -121,12 +121,16 @@ class OnlineBookingTest extends TestCase
         $this->assertSame('민호', Reservation::latest('id')->first()->resource->name);
     }
 
-    public function test_deposit_service_waits_for_confirmation(): void
+    // 보증금 상품: 예약은 대기 + 결제 대기, 다음 화면은 결제 화면
+    public function test_deposit_service_goes_to_payment(): void
     {
-        $this->book(['service_id' => $this->serviceNamed('디지털 펌')->id])->assertCreated();
+        $res = $this->book(['service_id' => $this->serviceNamed('디지털 펌')->id])->assertCreated();
 
-        $this->assertSame('pending', Reservation::sole()->status);
-        $this->get(route('shop.booking.done', 'demo-hair'))->assertSee('예약을 접수했습니다');
+        $r = Reservation::with('payment')->sole();
+        $this->assertSame('pending', $r->status);
+        $this->assertSame('ready', $r->payment->status);
+        $res->assertJsonPath('redirect', route('shop.pay.show', ['demo-hair', $r->payment->payment_key]));
+        $this->get(route('shop.booking.done', 'demo-hair'))->assertSee('결제를 기다리고 있습니다');
     }
 
     public function test_space_party_size_is_limited(): void

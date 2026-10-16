@@ -11,6 +11,7 @@ return [
     'boolean' => ':attribute 값이 올바르지 않습니다.',
     'date' => ':attribute은(는) 올바른 날짜가 아닙니다.',
     'date_format' => ':attribute은(는) :format 형식이어야 합니다.',
+    'distinct' => ':attribute 값이 겹칩니다.',
     'email' => ':attribute 형식이 올바르지 않습니다.',
     'exists' => '선택한 :attribute이(가) 올바르지 않습니다.',
     'in' => '선택한 :attribute이(가) 올바르지 않습니다.',
@@ -37,6 +38,7 @@ return [
 
     'attributes' => [
         'name' => '이름',
+        'distinct' => ':attribute 값이 겹칩니다.',
         'email' => '이메일',
         'password' => '비밀번호',
         'role' => '권한',
@@ -50,5 +52,7 @@ return [
         'date' => '날짜',
         'memo' => '메모',
         'point_rate' => '포인트 적립률',
+        'policy.*.hours' => '취소 규정 시간',
+        'policy.*.percent' => '환불 비율',
     ],
 ];

@@ -41,6 +41,26 @@
     </section>
 
     <section class="panel p-6">
+        <h2 class="font-semibold">취소·환불 규정</h2>
+        <p class="mt-1 text-sm text-sub">보증금을 받은 예약을 취소할 때 환불 금액을 제안하는 기준입니다. 어느 구간에도 들지 않으면 0%입니다. 모두 비우면 기본 규정(24시간 전 100%, 3시간 전 50%)을 씁니다.</p>
+        <div class="mt-4 space-y-2">
+            @foreach (range(0, 2) as $i)
+                <div class="flex flex-wrap items-center gap-2 text-sm">
+                    <span>예약</span>
+                    <input name="policy[{{ $i }}][hours]" type="number" min="0" max="720" class="input w-24" aria-label="몇 시간 전"
+                           value="{{ old("policy.$i.hours", $policy[$i]['hours'] ?? '') }}">
+                    <span>시간 전까지 취소하면</span>
+                    <input name="policy[{{ $i }}][percent]" type="number" min="0" max="100" class="input w-20" aria-label="환불 비율"
+                           value="{{ old("policy.$i.percent", $policy[$i]['percent'] ?? '') }}">
+                    <span>% 환불</span>
+                </div>
+                @error("policy.$i.hours") <p class="text-sm text-st-noshow">{{ $message }}</p> @enderror
+                @error("policy.$i.percent") <p class="text-sm text-st-noshow">{{ $message }}</p> @enderror
+            @endforeach
+        </div>
+    </section>
+
+    <section class="panel p-6">
         <h2 class="font-semibold">화면 용어</h2>
         <p class="mt-1 text-sm text-sub">비워 두면 업종 기본값을 씁니다.</p>
         <div class="mt-4 grid gap-5 sm:grid-cols-3">

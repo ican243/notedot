@@ -73,13 +73,17 @@ class BookingController extends Controller
         // 완료 화면은 이 브라우저에서 방금 한 예약만 보여 준다 (주소에 번호를 넣어 남의 예약을 보는 일 방지)
         $request->session()->put("booked.{$shop->id}", $reservation->id);
 
-        return response()->json(['redirect' => route('shop.booking.done', $shop)], 201);
+        // 보증금이 있으면 결제 화면으로, 없으면 완료 화면으로
+        $payment = $reservation->payment;
+        $next = $payment ? route('shop.pay.show', [$shop, $payment->payment_key]) : route('shop.booking.done', $shop);
+
+        return response()->json(['redirect' => $next], 201);
     }
 
     public function done(Request $request, Shop $shop): View|RedirectResponse
     {
         $reservation = $shop->reservations()
-            ->with(['customer', 'resource', 'items', 'classSession'])
+            ->with(['customer', 'resource', 'items', 'classSession', 'payment'])
             ->find($request->session()->get("booked.{$shop->id}"));
 
         if (! $reservation) {

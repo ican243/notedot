@@ -16,6 +16,9 @@ class ShopSettingRequest extends AdminRequest
             'industry' => ['required', Rule::in(array_keys(config('industries')))],
             'slot_unit' => ['required', 'integer', Rule::in([10, 15, 20, 30, 60])],
             'point_rate' => ['required', 'integer', 'between:0,50'],
+            'policy' => ['array', 'max:3'],
+            'policy.*.hours' => ['nullable', 'integer', 'between:0,720', 'distinct'],
+            'policy.*.percent' => ['nullable', 'required_with:policy.*.hours', 'integer', 'between:0,100'],
             'theme' => ['required', Rule::in(['auto', 'spring', 'summer', 'autumn', 'winter'])],
             'labels.resource' => ['nullable', 'string', 'max:20'],
             'labels.service' => ['nullable', 'string', 'max:20'],
@@ -59,6 +62,20 @@ class ShopSettingRequest extends AdminRequest
             'theme' => $this->input('theme'),
             'labels' => array_filter($this->input('labels', []), fn ($v) => filled($v)) ?: null,
             'business_hours' => $hours,
+            'cancel_policy' => $this->policy(),
         ];
+    }
+
+    // 취소 규정: 시간이 적힌 줄만, 이른 구간(시간이 큰 것)부터. 비우면 null → 기본 규정
+    private function policy(): ?array
+    {
+        $tiers = collect($this->input('policy', []))
+            ->filter(fn ($t) => filled($t['hours'] ?? null))
+            ->map(fn ($t) => ['hours' => (int) $t['hours'], 'percent' => (int) $t['percent']])
+            ->sortByDesc('hours')
+            ->values()
+            ->all();
+
+        return $tiers ? ['tiers' => $tiers] : null;
     }
 }

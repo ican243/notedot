@@ -36,6 +36,7 @@ class CalendarController extends Controller
                 'move' => route('admin.reservations.move', '__ID__'),
                 'status' => route('admin.reservations.status', '__ID__'),
                 'reservationPass' => route('admin.reservations.pass.store', '__ID__'),
+                'refund' => route('admin.reservations.refund', '__ID__'),
                 'customers' => route('admin.customers.search'),
                 'sessionStore' => route('admin.class-sessions.store'),
                 'session' => route('admin.class-sessions.show', '__ID__'),
@@ -63,6 +64,7 @@ class CalendarController extends Controller
             'channels' => Reservation::CHANNELS,
             'labels' => ['resource' => term('resource'), 'service' => term('service'), 'customer' => term('customer'), 'group' => '그룹 '.term('service')],
             'me' => $staff->id,
+            'isOwner' => $staff->isOwner(),
             'realtime' => $realtime->clientConfig(route('admin.realtime.token')),
         ];
 

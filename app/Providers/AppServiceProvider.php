@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\PaymentGateway;
 use App\Contracts\RealtimePublisher;
+use App\Services\Payment\DemoGateway;
+use App\Services\Payment\PortOneGateway;
 use App\Services\Realtime\NodePublisher;
 use App\Services\Realtime\PollingPublisher;
 use App\Services\Realtime\RealtimeTokenService;
@@ -18,6 +21,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(RealtimePublisher::class, fn ($app) => $app->make(RealtimeTokenService::class)->usesNode()
             ? new NodePublisher(config('realtime.server_url'), config('realtime.secret'))
             : new PollingPublisher);
+
+        // 결제: 설정이 portone 이고 키가 모두 있으면 포트원, 아니면 데모 결제창 (실제 돈이 나가지 않음)
+        $this->app->singleton(DemoGateway::class);
+        $this->app->bind(PaymentGateway::class, function ($app) {
+            $cfg = config('payment.portone');
+            $ready = config('payment.driver') === 'portone'
+                && filled($cfg['store_id']) && filled($cfg['channel_key']) && filled($cfg['api_secret']);
+
+            return $ready ? new PortOneGateway($cfg) : $app->make(DemoGateway::class);
+        });
     }
 
     public function boot(): void

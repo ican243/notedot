@@ -172,7 +172,7 @@
             <span class="text-sub">결제 예정 금액</span>
             <span class="text-lg font-bold" x-text="won(totalPrice)"></span>
         </div>
-        <p class="-mt-2 text-xs text-sub" x-show="service?.deposit">보증금이 있는 {{ term('service') }}은(는) 매장 확인 후 예약이 확정됩니다.</p>
+        <p class="-mt-2 text-xs text-sub" x-show="service?.deposit">보증금이 있는 {{ term('service') }}은(는) 다음 화면에서 보증금을 결제하면 예약이 확정됩니다. ({{ config('payment.hold_minutes') }}분 안에 결제하지 않으면 자동 취소)</p>
 
         <button class="btn-main w-full py-3 text-base" :disabled="saving" x-text="saving ? '예약하는 중...' : '예약하기'"></button>
     </form>

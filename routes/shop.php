@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Shop\BookingController;
 use App\Http\Controllers\Shop\HomeController;
+use App\Http\Controllers\Shop\PaymentController;
 use App\Http\Controllers\Shop\RealtimeTokenController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,14 @@ Route::get('booking/slots', [BookingController::class, 'slots'])->name('booking.
 Route::get('booking/sessions', [BookingController::class, 'sessions'])->name('booking.sessions');
 Route::post('booking', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('booking.store');
 Route::get('booking/done', [BookingController::class, 'done'])->name('booking.done');
+
+// 보증금 결제 (이 브라우저에서 방금 한 예약만)
+Route::get('pay/{paymentKey}', [PaymentController::class, 'show'])->name('pay.show');
+Route::get('pay/{paymentKey}/return', [PaymentController::class, 'return'])->name('pay.return');
+Route::middleware('throttle:20,1')->group(function () {
+    Route::post('pay/{paymentKey}/complete', [PaymentController::class, 'complete'])->name('pay.complete');
+    Route::post('pay/{paymentKey}/demo', [PaymentController::class, 'demo'])->name('pay.demo');
+});
 
 // 실시간 서버 접속 출입증 (시간이 바뀌면 화면에 바로 "마감" 표시)
 Route::get('realtime/token', RealtimeTokenController::class)->middleware('throttle:30,1')->name('realtime.token');

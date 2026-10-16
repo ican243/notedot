@@ -42,6 +42,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::put('reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
     Route::patch('reservations/{reservation}/move', [ReservationController::class, 'move'])->name('reservations.move');
     Route::patch('reservations/{reservation}/status', [ReservationController::class, 'status'])->name('reservations.status');
+    Route::post('reservations/{reservation}/refund', [ReservationController::class, 'refund'])->name('reservations.refund');
     Route::post('reservations/{reservation}/pass', [ReservationPassController::class, 'store'])->name('reservations.pass.store');
     Route::delete('reservations/{reservation}/pass', [ReservationPassController::class, 'destroy'])->name('reservations.pass.destroy');
 

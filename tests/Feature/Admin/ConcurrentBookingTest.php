@@ -2,12 +2,16 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\AuditLog;
 use App\Models\ClassSession;
 use App\Models\Pass;
+use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\Shop;
 use App\Services\ClassSessionService;
 use App\Services\PassService;
+use App\Services\Payment\DemoGateway;
+use App\Services\PaymentService;
 use App\Services\ReservationService;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Facades\DB;
@@ -125,6 +129,35 @@ class ConcurrentBookingTest extends TestCase
 
         $this->assertSame(1, count(array_keys($results, 'ok')), implode(', ', $results));
         $this->assertSame(9, $pass->refresh()->balance);
+    }
+
+    // 결제 완료 확인이 8번 동시에 들어와도(화면 + 웹훅 + 새로고침) 결제·확정 처리는 한 번만
+    public function test_parallel_payment_confirms_once(): void
+    {
+        if (! function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl 확장이 필요합니다.');
+        }
+
+        $this->seedDemoShops();
+        $r = app(ReservationService::class)->create($this->shop(), null, [
+            'customer_name' => '동시', 'customer_phone' => '010-3000-0002',
+            'resource_id' => $this->resourceNamed('지수')->id,
+            'service_ids' => [$this->serviceNamed('남성 커트')->id],
+            'date' => '2030-01-07', 'start_time' => '10:00', 'status' => 'pending',
+        ]);
+        $r->update(['deposit' => 10000]);
+        $payment = app(PaymentService::class)->start($r);
+        app(DemoGateway::class)->simulate($payment, 'paid');
+
+        $results = $this->race(function () use ($payment) {
+            app(PaymentService::class)->confirm(Payment::findOrFail($payment->id));
+        });
+
+        $this->assertSame(self::WORKERS, count(array_keys($results, 'ok')), implode(', ', $results));
+        $this->assertSame('paid', $payment->refresh()->status);
+        $this->assertSame('confirmed', $r->refresh()->status);
+        $this->assertSame(1, AuditLog::where('target_id', $r->id)->where('action', 'paid')->count());
+        $this->assertSame(1, AuditLog::where('target_id', $r->id)->where('action', 'status_changed')->count());
     }
 
     /**

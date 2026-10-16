@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\DemoGuard;
+use App\Http\Middleware\EnsureOwner;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,9 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // 라우트에서 ->middleware('owner'), ->middleware('demo') 로 쓰는 이름표
         $middleware->alias([
-            'owner' => \App\Http\Middleware\EnsureOwner::class,
-            'demo' => \App\Http\Middleware\DemoGuard::class,
+            'owner' => EnsureOwner::class,
+            'demo' => DemoGuard::class,
         ]);
+
+        // PG 서버가 보내는 웹훅은 우리 화면에서 오는 요청이 아니라 CSRF 토큰이 없다 → 대신 서명으로 확인
+        $middleware->validateCsrfTokens(except: ['payments/webhook']);
 
         // 로그인이 필요한 곳에 손님이 오면 보낼 곳
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('s/*')

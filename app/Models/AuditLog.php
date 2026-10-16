@@ -16,6 +16,8 @@ class AuditLog extends Model
         'moved' => '시간 이동',
         'status_changed' => '상태 변경',
         'canceled' => '일정 취소',
+        'paid' => '결제',
+        'refunded' => '환불',
     ];
 
     protected $fillable = ['shop_id', 'staff_id', 'action', 'target_type', 'target_id', 'changes', 'ip'];
