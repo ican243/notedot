@@ -5,6 +5,12 @@
 @section('content')
 <div class="flex min-h-screen items-center justify-center p-4">
     <div class="w-full max-w-md">
+        <div class="mb-3 flex items-center justify-between">
+            @if (config('demo.enabled'))
+                <a href="{{ url('/') }}" class="text-sm text-sub hover:underline">← 데모 안내</a>
+            @endif
+            <x-season-switch :fallback="\App\Support\Season::resolve()" class="ml-auto" />
+        </div>
         <x-season-card class="mb-6">
             <p class="text-sm opacity-80">예약·고객관리</p>
             <h1 class="mt-1 text-3xl font-bold">notedot</h1>
@@ -17,7 +23,7 @@
 
             <div>
                 <label for="email" class="mb-1 block text-sm font-medium">이메일</label>
-                <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
+                <input id="email" name="email" type="email" value="{{ old('email', is_string(request('email')) ? request('email') : '') }}" required autofocus
                        autocomplete="username"
                        class="w-full rounded-lg border border-line px-3 py-2.5 focus:border-text focus:outline-none">
             </div>

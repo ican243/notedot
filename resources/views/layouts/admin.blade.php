@@ -8,6 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', '관리자') · notedot</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+    @include('partials.season-boot')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen font-sans antialiased">
@@ -54,6 +55,7 @@
                 @if (config('demo.enabled'))
                     <span class="badge mr-auto">데모 · 매일 {{ config('demo.reset_at') }} 초기화</span>
                 @endif
+                <x-season-switch :fallback="$me->shop->season()" />
                 <span class="text-sm text-sub">{{ $me->name }} · {{ $me->isOwner() ? '대표' : '직원' }}</span>
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf
