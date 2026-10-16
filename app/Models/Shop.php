@@ -20,7 +20,7 @@ class Shop extends Model
 
     protected $fillable = [
         'slug', 'name', 'industry', 'labels', 'business_hours',
-        'slot_unit', 'point_rate', 'cancel_policy', 'theme',
+        'slot_unit', 'point_rate', 'cancel_policy', 'notification_settings', 'theme',
     ];
 
     protected function casts(): array
@@ -29,6 +29,7 @@ class Shop extends Model
             'labels' => 'array',
             'business_hours' => 'array',
             'cancel_policy' => 'array',
+            'notification_settings' => 'array',
             'slot_unit' => 'integer',
             'point_rate' => 'integer',
         ];
@@ -67,6 +68,17 @@ class Shop extends Model
     public function passes(): HasMany
     {
         return $this->hasMany(Pass::class);
+    }
+
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(NotificationLog::class);
+    }
+
+    // 알림 설정 (정하지 않은 것은 기본값)
+    public function notifySettings(): array
+    {
+        return array_merge(config('notification.defaults'), $this->notification_settings ?? []);
     }
 
     public function resourceSchedules(): HasMany

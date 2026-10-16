@@ -40,6 +40,24 @@
         </x-admin.field>
     </section>
 
+    <section class="panel p-6" id="notify">
+        <h2 class="font-semibold">{{ term('customer') }} 알림</h2>
+        <p class="mt-1 text-sm text-sub">문자·알림톡으로 보낼 알림을 고릅니다. 방문(현장) 예약에는 보내지 않습니다.</p>
+        @php($notify = $shop->notifySettings())
+        <div class="mt-4 space-y-2 text-sm">
+            @foreach (['confirmed' => '예약이 확정되면', 'canceled' => '예약이 취소되면', 'reminder' => '예약 전날 리마인드'] as $key => $label)
+                <label class="flex items-center gap-2">
+                    <input type="hidden" name="notify[{{ $key }}]" value="0">
+                    <input type="checkbox" name="notify[{{ $key }}]" value="1" @checked(old("notify.$key", $notify[$key]))>
+                    {{ $label }}
+                </label>
+            @endforeach
+            <x-admin.field label="리마인드 보내는 시각" name="notify.reminder_at" help="예약 전날 이 시각에 보냅니다.">
+                <input id="reminder_at" name="notify[reminder_at]" type="time" value="{{ old('notify.reminder_at', $notify['reminder_at']) }}" class="input w-32">
+            </x-admin.field>
+        </div>
+    </section>
+
     <section class="panel p-6">
         <h2 class="font-semibold">취소·환불 규정</h2>
         <p class="mt-1 text-sm text-sub">보증금을 받은 예약을 취소할 때 환불 금액을 제안하는 기준입니다. 어느 구간에도 들지 않으면 0%입니다. 모두 비우면 기본 규정(24시간 전 100%, 3시간 전 50%)을 씁니다.</p>

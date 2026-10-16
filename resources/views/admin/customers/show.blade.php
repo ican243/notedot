@@ -217,6 +217,22 @@
                 </form>
             @endif
         </section>
+
+        {{-- 받은 알림 --}}
+        <section class="panel space-y-2 p-5">
+            <h2 class="font-semibold">받은 알림</h2>
+            <ul class="space-y-1 text-sm">
+                @forelse ($notifications as $n)
+                    <li class="flex gap-2">
+                        <span class="w-20 shrink-0 text-sub">{{ $n->created_at->format('y.m.d H:i') }}</span>
+                        <span class="w-24 shrink-0">{{ \App\Models\NotificationLog::TYPES[$n->type] ?? $n->type }}</span>
+                        <span @class(['text-sub', 'text-st-noshow' => $n->status === 'failed'])>{{ \App\Models\NotificationLog::STATUSES[$n->status] }} · {{ \App\Models\NotificationLog::CHANNELS[$n->channel] }}</span>
+                    </li>
+                @empty
+                    <li class="text-sub">보낸 알림이 없습니다.</li>
+                @endforelse
+            </ul>
+        </section>
     </div>
 </div>
 @endsection

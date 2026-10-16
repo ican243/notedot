@@ -53,6 +53,7 @@ return [
         'memo' => '메모',
         'point_rate' => '포인트 적립률',
         'policy.*.hours' => '취소 규정 시간',
+        'notify.reminder_at' => '리마인드 시각',
         'policy.*.percent' => '환불 비율',
     ],
 ];

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ClassSessionController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CustomerSearchController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PassController;
 use App\Http\Controllers\Admin\RealtimeTokenController;
 use App\Http\Controllers\Admin\ReservationController;
@@ -61,6 +62,10 @@ Route::middleware('auth:admin')->group(function () {
 
     // 대표만
     Route::middleware('owner')->group(function () {
+        // 알림 발송 기록
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/{notificationLog}/retry', [NotificationController::class, 'retry'])->name('notifications.retry');
+
         // 회원권·포인트 (돈과 관계된 일이라 대표만)
         Route::post('customers/{customer}/passes', [PassController::class, 'store'])->name('passes.store');
         Route::post('passes/{pass}/adjust', [PassController::class, 'adjust'])->name('passes.adjust');

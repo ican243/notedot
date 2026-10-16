@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Events\ClassSessionChanged;
+use App\Events\ReservationChanged;
 use App\Models\ClassSession;
 use App\Models\Service;
 use App\Models\Shop;
@@ -141,6 +142,7 @@ class ClassSessionService
                 $old = $reservation->status;
                 $this->reservations->applyStatus($reservation, 'canceled', $reason ?: '일정 취소');
                 $this->passes->restoreFor($reservation, $by, '일정 취소', skipCanceled: true);
+                ReservationChanged::dispatch($reservation, 'status', $by);   // 신청자에게 취소 알림
                 $this->audit->log($reservation, 'status_changed', $by, ['status' => [$old, 'canceled']]);
             }
 

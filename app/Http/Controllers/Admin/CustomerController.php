@@ -54,6 +54,7 @@ class CustomerController extends Controller
             'reservations' => $reservations,
             'passes' => $passes,
             'points' => $customer->pointTransactions()->with(['staff', 'reservation'])->latest('id')->limit(30)->get(),
+            'notifications' => $customer->notificationLogs()->latest('id')->limit(10)->get(),
             'countServices' => $staff->shop->services()->where('booking_type', '!=', 'space')->get(),
             'statuses' => Reservation::STATUSES,
         ]);

@@ -11,8 +11,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 데모 데이터 수백 건을 넣는 동안에는 실시간 알림을 보내지 않는다
+        // 데모 데이터 수백 건을 넣는 동안에는 실시간 알림·고객 알림을 보내지 않는다
         app()->instance(RealtimePublisher::class, new PollingPublisher);
+        config(['notification.enabled' => false]);   // 데모 고객에게 알림 기록을 만들지 않는다
 
         $this->call([
             DemoShopSeeder::class,

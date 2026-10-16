@@ -16,6 +16,10 @@ class ShopSettingRequest extends AdminRequest
             'industry' => ['required', Rule::in(array_keys(config('industries')))],
             'slot_unit' => ['required', 'integer', Rule::in([10, 15, 20, 30, 60])],
             'point_rate' => ['required', 'integer', 'between:0,50'],
+            'notify.confirmed' => ['boolean'],
+            'notify.canceled' => ['boolean'],
+            'notify.reminder' => ['boolean'],
+            'notify.reminder_at' => ['nullable', 'date_format:H:i'],
             'policy' => ['array', 'max:3'],
             'policy.*.hours' => ['nullable', 'integer', 'between:0,720', 'distinct'],
             'policy.*.percent' => ['nullable', 'required_with:policy.*.hours', 'integer', 'between:0,100'],
@@ -63,6 +67,13 @@ class ShopSettingRequest extends AdminRequest
             'labels' => array_filter($this->input('labels', []), fn ($v) => filled($v)) ?: null,
             'business_hours' => $hours,
             'cancel_policy' => $this->policy(),
+            // 알림 칸이 없는 요청이면 지금 설정을 그대로 둔다
+            'notification_settings' => $this->has('notify') ? [
+                'confirmed' => $this->boolean('notify.confirmed'),
+                'canceled' => $this->boolean('notify.canceled'),
+                'reminder' => $this->boolean('notify.reminder'),
+                'reminder_at' => $this->input('notify.reminder_at') ?: config('notification.defaults.reminder_at'),
+            ] : $this->shop()->notification_settings,
         ];
     }
 

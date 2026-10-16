@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Contracts\MessageSender;
 use App\Contracts\PaymentGateway;
 use App\Contracts\RealtimePublisher;
+use App\Services\Messaging\LogSender;
+use App\Services\Messaging\SolapiSender;
 use App\Services\Payment\DemoGateway;
 use App\Services\Payment\PortOneGateway;
 use App\Services\Realtime\NodePublisher;
@@ -31,6 +34,15 @@ class AppServiceProvider extends ServiceProvider
 
             return $ready ? new PortOneGateway($cfg) : $app->make(DemoGateway::class);
         });
+
+        // 알림: 설정이 solapi 이고 키·발신번호가 있으면 솔라피, 아니면 기록만
+        $this->app->bind(MessageSender::class, function () {
+            $cfg = config('notification.solapi');
+            $ready = config('notification.driver') === 'solapi'
+                && filled($cfg['api_key']) && filled($cfg['api_secret']) && filled($cfg['sender']);
+
+            return $ready ? new SolapiSender($cfg) : new LogSender;
+        });
     }
 
     public function boot(): void
@@ -51,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
             'classSession' => 'classSessions',
             'customer' => 'customers',
             'pass' => 'passes',
+            'notificationLog' => 'notificationLogs',
         ];
 
         foreach ($relations as $param => $relation) {

@@ -45,6 +45,11 @@ class Customer extends Authenticatable
         return $this->hasMany(Pass::class);
     }
 
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(NotificationLog::class);
+    }
+
     public function pointTransactions(): HasMany
     {
         return $this->hasMany(PointTransaction::class);

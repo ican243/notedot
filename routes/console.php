@@ -14,3 +14,8 @@ Schedule::command('demo:reset')
 Schedule::command('payments:expire')
     ->everyMinute()
     ->withoutOverlapping();
+
+// 내일 예약 리마인드 (매장별 리마인드 시각이 지나면, 예약마다 한 번만)
+Schedule::command('notifications:remind')
+    ->everyTenMinutes()
+    ->withoutOverlapping();

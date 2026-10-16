@@ -22,6 +22,7 @@
             ['admin.resources.index', term('resource').' 관리', 'admin.resources.*,admin.schedules.*', true],
             ['admin.services.index', term('service').' 관리', 'admin.services.*', true],
             ['admin.staffs.index', '직원 계정', 'admin.staffs.*', true],
+            ['admin.notifications.index', '알림 기록', 'admin.notifications.*', true],
             ['admin.settings.shop', '매장 설정', 'admin.settings.*', true],
         ];
     @endphp
