@@ -127,7 +127,7 @@
                     <ul class="divide-y divide-line rounded-xl border border-line">
                         <template x-for="a in session.attendees" :key="a.id">
                             <li class="flex flex-wrap items-center gap-2 px-3 py-2 text-sm" :class="a.status === 'canceled' ? 'text-sub' : ''">
-                                <span class="font-medium" :class="a.status === 'canceled' ? 'line-through' : ''" x-text="a.name"></span>
+                                <a :href="a.url" class="font-medium hover:underline" :class="a.status === 'canceled' ? 'line-through' : ''" x-text="a.name"></a>
                                 <span class="text-sub" x-text="a.phone + (a.party_size > 1 ? ' · ' + a.party_size + '명' : '') + (a.no_show_count ? ' · 노쇼 ' + a.no_show_count : '')"></span>
                                 <span class="st-badge" :class="'st-' + a.status" x-text="config.statuses[a.status]"></span>
                                 <span class="ml-auto flex gap-1" x-show="!session.canceled">
@@ -137,6 +137,9 @@
                                     <button type="button" class="btn-line btn-danger px-2 py-1 text-xs" x-show="a.status !== 'canceled'" @click="attendeeStatus(a, 'canceled')">취소</button>
                                     <button type="button" class="btn-line px-2 py-1 text-xs" x-show="a.status === 'canceled'" @click="attendeeStatus(a, 'confirmed')">되돌리기</button>
                                 </span>
+                                <div class="w-full" x-show="a.passes.used.length || a.passes.usable.length">
+                                    @include('admin.calendar.pass-box', ['src' => 'a'])
+                                </div>
                             </li>
                         </template>
                     </ul>

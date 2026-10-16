@@ -327,6 +327,19 @@ export default (config) => {
             await this.send(() => api('PATCH', this.url('sessionCancel', id), { reason }), () => this.openSession(id));
         },
 
+        // ── 회원권 (예약 창·일정 창 공용) ────────
+        async usePass(reservationId, passId) {
+            await this.send(() => api('POST', this.url('reservationPass', reservationId), { pass_id: Number(passId) }), () => this.reopen());
+        },
+        async restorePass(reservationId) {
+            if (!window.confirm('회원권 사용을 취소하고 잔액을 되돌릴까요?')) return;
+            await this.send(() => api('DELETE', this.url('reservationPass', reservationId)), () => this.reopen());
+        },
+        // 지금 열려 있는 창(일정 창 또는 예약 창)을 새로 불러오기
+        reopen() {
+            return this.sessionOpen && this.session ? this.openSession(this.session.id) : this.openEdit(this.detail.id);
+        },
+
         // 저장 공통: 보내기 → 알림 → 캘린더 새로고침 → 다음 할 일. 실패하면 오류 표시
         async send(request, then) {
             this.saving = true;

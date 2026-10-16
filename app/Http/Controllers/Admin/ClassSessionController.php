@@ -11,6 +11,7 @@ use App\Models\AuditLog;
 use App\Models\ClassSession;
 use App\Models\Reservation;
 use App\Services\ClassSessionService;
+use App\Services\PassService;
 use App\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class ClassSessionController extends Controller
     }
 
     // 일정 창에 채울 내용: 정보 + 신청자 목록 + 변경 이력
-    public function show(Request $request, ClassSession $classSession): JsonResponse
+    public function show(Request $request, ClassSession $classSession, PassService $passes): JsonResponse
     {
         $this->authorizeResource($request, $classSession);
         $classSession->load(['service', 'resource', 'reservations' => fn ($q) => $q->with('customer')->orderBy('id')]);
@@ -65,6 +66,8 @@ class ClassSessionController extends Controller
                 'party_size' => $r->party_size,
                 'status' => $r->status,
                 'channel' => $r->channel,
+                'url' => route('admin.customers.show', $r->customer),
+                'passes' => $passes->summaryFor($r),
             ]),
             'logs' => $logs->map(fn (AuditLog $l) => [
                 'action' => AuditLog::ACTIONS[$l->action] ?? $l->action,

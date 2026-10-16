@@ -3,10 +3,13 @@
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\Admin\ClassSessionController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\CustomerSearchController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PassController;
 use App\Http\Controllers\Admin\RealtimeTokenController;
 use App\Http\Controllers\Admin\ReservationController;
+use App\Http\Controllers\Admin\ReservationPassController;
 use App\Http\Controllers\Admin\ResourceController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
@@ -39,6 +42,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::put('reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
     Route::patch('reservations/{reservation}/move', [ReservationController::class, 'move'])->name('reservations.move');
     Route::patch('reservations/{reservation}/status', [ReservationController::class, 'status'])->name('reservations.status');
+    Route::post('reservations/{reservation}/pass', [ReservationPassController::class, 'store'])->name('reservations.pass.store');
+    Route::delete('reservations/{reservation}/pass', [ReservationPassController::class, 'destroy'])->name('reservations.pass.destroy');
 
     // 그룹 일정 (정원제) — 일정 만들기·수정·이동·취소, 신청자 추가
     Route::post('class-sessions', [ClassSessionController::class, 'store'])->name('class-sessions.store');
@@ -48,8 +53,19 @@ Route::middleware('auth:admin')->group(function () {
     Route::patch('class-sessions/{classSession}/cancel', [ClassSessionController::class, 'cancel'])->name('class-sessions.cancel');
     Route::post('class-sessions/{classSession}/reservations', [ClassSessionController::class, 'book'])->name('class-sessions.book');
 
+    // 고객 관리 (직원은 자기 담당 고객만)
+    Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('customers/{customer}', [CustomerController::class, 'show'])->whereNumber('customer')->name('customers.show');
+    Route::put('customers/{customer}', [CustomerController::class, 'update'])->whereNumber('customer')->name('customers.update');
+
     // 대표만
     Route::middleware('owner')->group(function () {
+        // 회원권·포인트 (돈과 관계된 일이라 대표만)
+        Route::post('customers/{customer}/passes', [PassController::class, 'store'])->name('passes.store');
+        Route::post('passes/{pass}/adjust', [PassController::class, 'adjust'])->name('passes.adjust');
+        Route::post('passes/{pass}/cancel', [PassController::class, 'cancel'])->name('passes.cancel');
+        Route::post('customers/{customer}/points', [PassController::class, 'adjustPoints'])->name('points.adjust');
+
         Route::get('settings/shop', [ShopSettingController::class, 'edit'])->name('settings.shop');
         Route::put('settings/shop', [ShopSettingController::class, 'update'])->name('settings.shop.update');
 

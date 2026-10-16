@@ -5,6 +5,9 @@ return [
     'after' => ':attribute은(는) :date 이후여야 합니다.',
     'after_or_equal' => ':attribute은(는) :date 이후 날짜여야 합니다.',
     'array' => ':attribute 형식이 올바르지 않습니다.',
+    'between' => [
+        'numeric' => ':attribute은(는) :min ~ :max 사이여야 합니다.',
+    ],
     'boolean' => ':attribute 값이 올바르지 않습니다.',
     'date' => ':attribute은(는) 올바른 날짜가 아닙니다.',
     'date_format' => ':attribute은(는) :format 형식이어야 합니다.',
@@ -24,6 +27,7 @@ return [
         'numeric' => ':attribute은(는) :min 이상이어야 합니다.',
         'string' => ':attribute은(는) :min자 이상이어야 합니다.',
     ],
+    'not_in' => ':attribute 값이 올바르지 않습니다.',
     'regex' => ':attribute 형식이 올바르지 않습니다.',
     'required' => ':attribute을(를) 입력하세요.',
     'required_if' => ':attribute을(를) 입력하세요.',
@@ -45,5 +49,6 @@ return [
         'booking_type' => '예약 방식',
         'date' => '날짜',
         'memo' => '메모',
+        'point_rate' => '포인트 적립률',
     ],
 ];

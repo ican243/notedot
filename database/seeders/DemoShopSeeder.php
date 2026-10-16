@@ -26,6 +26,11 @@ class DemoShopSeeder extends Seeder
         $this->hair();
         $this->pilates();
         $this->studyroom();
+
+        // 포인트 적립률 (필라테스는 회원권 위주라 적립 안 함)
+        foreach (['demo-hair' => 5, 'demo-pilates' => 0, 'demo-studyroom' => 3] as $slug => $rate) {
+            Shop::where('slug', $slug)->update(['point_rate' => $rate]);
+        }
     }
 
     private function hair(): void

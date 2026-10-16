@@ -21,6 +21,8 @@ class ReservationService
         private CustomerService $customers,
         private AuditLogger $audit,
         private AvailabilityService $availability,
+        private PassService $passes,
+        private PointService $points,
     ) {}
 
     /**
@@ -59,6 +61,9 @@ class ReservationService
 
             $this->audit->log($reservation, 'created', $by);
             ReservationChanged::dispatch($reservation, 'created', $by);
+            if ($reservation->status === 'completed') {
+                $this->points->sync($reservation, $by);
+            }
 
             return $reservation;
         });
@@ -108,6 +113,9 @@ class ReservationService
 
             $this->audit->log($reservation, 'created', $by);
             ReservationChanged::dispatch($reservation, 'created', $by);
+            if ($reservation->status === 'completed') {
+                $this->points->sync($reservation, $by);
+            }
 
             return $reservation;
         });
@@ -152,6 +160,7 @@ class ReservationService
                 $this->audit->log($reservation, 'updated', $by, $changes);
                 ReservationChanged::dispatch($reservation, 'updated', $by);
             }
+            $this->points->sync($reservation, $by);   // 금액이 바뀌었으면 완료 적립도 맞춘다
 
             return $reservation;
         });
@@ -208,6 +217,10 @@ class ReservationService
             }
 
             $this->applyStatus($reservation, $status, $reason);
+            if ($status === 'canceled') {
+                $this->passes->restoreFor($reservation, $by, '예약 취소', skipCanceled: true);   // 회원권으로 처리했으면 돌려준다
+            }
+            $this->points->sync($reservation, $by);   // 완료 → 적립, 완료가 풀리면 회수
 
             $changes = ['status' => [$old, $status]];
             if ($reason) {

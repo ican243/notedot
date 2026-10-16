@@ -18,6 +18,7 @@
         $menu = [
             ['admin.dashboard', '대시보드', 'admin.dashboard', false],
             ['admin.calendar', '예약 캘린더', 'admin.calendar', false],
+            ['admin.customers.index', term('customer').' 관리', 'admin.customers.*', false],
             ['admin.resources.index', term('resource').' 관리', 'admin.resources.*,admin.schedules.*', true],
             ['admin.services.index', term('service').' 관리', 'admin.services.*', true],
             ['admin.staffs.index', '직원 계정', 'admin.staffs.*', true],

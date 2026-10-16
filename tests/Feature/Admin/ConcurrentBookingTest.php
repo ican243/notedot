@@ -3,9 +3,11 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\ClassSession;
+use App\Models\Pass;
 use App\Models\Reservation;
 use App\Models\Shop;
 use App\Services\ClassSessionService;
+use App\Services\PassService;
 use App\Services\ReservationService;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Facades\DB;
@@ -73,6 +75,56 @@ class ConcurrentBookingTest extends TestCase
         $this->assertSame(6, count(array_keys($results, 'ok')), implode(', ', $results));
         $this->assertSame(2, count(array_keys($results, 'full')), implode(', ', $results));
         $this->assertSame(6, (int) Reservation::where('class_session_id', $session->id)->sum('party_size'));
+    }
+
+    // 3회 남은 권으로 서로 다른 예약 8건을 동시에 처리 → 정확히 3건만 성공, 잔액은 0 (마이너스 없음)
+    public function test_parallel_pass_uses_never_overdraw(): void
+    {
+        if (! function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl 확장이 필요합니다.');
+        }
+
+        $this->seedDemoShops();
+        $shop = $this->shop();
+        $ids = collect(range(0, self::WORKERS - 1))->map(fn (int $i) => app(ReservationService::class)->create($shop, null, [
+            'customer_name' => '동시', 'customer_phone' => '010-3000-0000',
+            'resource_id' => $this->resourceNamed('지수')->id,
+            'service_ids' => [$this->serviceNamed('남성 커트')->id],
+            'date' => '2030-01-07', 'start_time' => sprintf('%02d:00', 10 + $i),
+        ])->id);
+        $pass = app(PassService::class)->issue(Reservation::find($ids[0])->customer, null, ['type' => 'count', 'name' => '3회권', 'price' => 0, 'total' => 3]);
+
+        $results = $this->race(function (int $i) use ($ids, $pass) {
+            app(PassService::class)->useFor(Reservation::findOrFail($ids[$i]), Pass::findOrFail($pass->id), null);
+        });
+
+        $this->assertSame(3, count(array_keys($results, 'ok')), implode(', ', $results));
+        $this->assertSame(0, $pass->refresh()->balance);
+        $this->assertSame(0, (int) $pass->transactions()->sum('amount'));
+    }
+
+    // 같은 예약을 8번 동시에 "회원권으로 처리" → 1번만 차감
+    public function test_parallel_same_reservation_uses_pass_once(): void
+    {
+        if (! function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl 확장이 필요합니다.');
+        }
+
+        $this->seedDemoShops();
+        $r = app(ReservationService::class)->create($this->shop(), null, [
+            'customer_name' => '동시', 'customer_phone' => '010-3000-0001',
+            'resource_id' => $this->resourceNamed('지수')->id,
+            'service_ids' => [$this->serviceNamed('남성 커트')->id],
+            'date' => '2030-01-07', 'start_time' => '10:00',
+        ]);
+        $pass = app(PassService::class)->issue($r->customer, null, ['type' => 'count', 'name' => '10회권', 'price' => 0, 'total' => 10]);
+
+        $results = $this->race(function () use ($r, $pass) {
+            app(PassService::class)->useFor(Reservation::findOrFail($r->id), Pass::findOrFail($pass->id), null);
+        });
+
+        $this->assertSame(1, count(array_keys($results, 'ok')), implode(', ', $results));
+        $this->assertSame(9, $pass->refresh()->balance);
     }
 
     /**

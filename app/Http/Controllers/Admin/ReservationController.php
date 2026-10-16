@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\ReservationRequest;
 use App\Http\Requests\Admin\ReservationStatusRequest;
 use App\Models\AuditLog;
 use App\Models\Reservation;
+use App\Services\PassService;
 use App\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class ReservationController extends Controller
     }
 
     // 수정 창에 채울 내용 + 변경 이력
-    public function show(Request $request, Reservation $reservation): JsonResponse
+    public function show(Request $request, Reservation $reservation, PassService $passes): JsonResponse
     {
         $this->authorizeResource($request, $reservation);
         $reservation->load(['customer', 'resource', 'items']);
@@ -43,7 +44,10 @@ class ReservationController extends Controller
                 'name' => $reservation->customer->name,
                 'phone' => $reservation->customer->maskedPhone(),
                 'no_show_count' => $reservation->customer->no_show_count,
+                'points' => $reservation->customer->points,
+                'url' => route('admin.customers.show', $reservation->customer),
             ],
+            'passes' => $passes->summaryFor($reservation),
             'resource_id' => $reservation->resource_id,
             'service_ids' => $reservation->items->pluck('service_id'),
             'items' => $reservation->items->map->only('service_name', 'duration_min', 'price'),

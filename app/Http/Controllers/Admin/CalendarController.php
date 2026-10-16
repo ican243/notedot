@@ -35,6 +35,7 @@ class CalendarController extends Controller
                 'reservation' => route('admin.reservations.show', '__ID__'),
                 'move' => route('admin.reservations.move', '__ID__'),
                 'status' => route('admin.reservations.status', '__ID__'),
+                'reservationPass' => route('admin.reservations.pass.store', '__ID__'),
                 'customers' => route('admin.customers.search'),
                 'sessionStore' => route('admin.class-sessions.store'),
                 'session' => route('admin.class-sessions.show', '__ID__'),

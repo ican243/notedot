@@ -34,6 +34,10 @@
                 @endforeach
             </select>
         </x-admin.field>
+
+        <x-admin.field label="포인트 적립률 (%)" name="point_rate" help="예약이 완료되면 결제 금액의 몇 %를 적립할지. 0이면 적립하지 않습니다. 회원권으로 처리한 예약은 적립하지 않습니다.">
+            <input id="point_rate" name="point_rate" type="number" min="0" max="50" value="{{ old('point_rate', $shop->point_rate) }}" class="input">
+        </x-admin.field>
     </section>
 
     <section class="panel p-6">

@@ -22,6 +22,7 @@ class ClassSessionService
     public function __construct(
         private AvailabilityService $availability,
         private ReservationService $reservations,
+        private PassService $passes,
         private AuditLogger $audit,
     ) {}
 
@@ -139,6 +140,7 @@ class ClassSessionService
             foreach ($active as $reservation) {
                 $old = $reservation->status;
                 $this->reservations->applyStatus($reservation, 'canceled', $reason ?: '일정 취소');
+                $this->passes->restoreFor($reservation, $by, '일정 취소', skipCanceled: true);
                 $this->audit->log($reservation, 'status_changed', $by, ['status' => [$old, 'canceled']]);
             }
 

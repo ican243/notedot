@@ -84,6 +84,17 @@
                 </div>
             </template>
 
+            {{-- 고객 정보·회원권 (수정 모드) --}}
+            <template x-if="detail">
+                <div class="mb-5 space-y-2 rounded-xl border border-line p-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <a :href="detail.customer.url" class="font-medium underline" x-text="detail.customer.name + ' ' + config.labels.customer + ' 정보'"></a>
+                        <span class="text-sub" x-text="'포인트 ' + detail.customer.points.toLocaleString('ko-KR') + 'P'"></span>
+                    </div>
+                    @include('admin.calendar.pass-box', ['src' => 'detail'])
+                </div>
+            </template>
+
             {{-- 같은 칸에 그룹 일정을 만들고 싶을 때 --}}
             <template x-if="mode === 'create' && groupResources.length">
                 <p class="-mt-2 mb-4 text-sm text-sub">

@@ -20,7 +20,7 @@ class Shop extends Model
 
     protected $fillable = [
         'slug', 'name', 'industry', 'labels', 'business_hours',
-        'slot_unit', 'cancel_policy', 'theme',
+        'slot_unit', 'point_rate', 'cancel_policy', 'theme',
     ];
 
     protected function casts(): array
@@ -30,6 +30,7 @@ class Shop extends Model
             'business_hours' => 'array',
             'cancel_policy' => 'array',
             'slot_unit' => 'integer',
+            'point_rate' => 'integer',
         ];
     }
 
@@ -61,6 +62,11 @@ class Shop extends Model
     public function classSessions(): HasMany
     {
         return $this->hasMany(ClassSession::class);
+    }
+
+    public function passes(): HasMany
+    {
+        return $this->hasMany(Pass::class);
     }
 
     public function resourceSchedules(): HasMany

@@ -13,7 +13,7 @@ class Customer extends Authenticatable
     use SoftDeletes;
 
     protected $fillable = [
-        'shop_id', 'name', 'phone', 'password', 'memo',
+        'shop_id', 'name', 'phone', 'password', 'memo', 'points',
         'privacy_agreed_at', 'marketing_agreed_at',
     ];
 
@@ -38,6 +38,24 @@ class Customer extends Authenticatable
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);
+    }
+
+    public function passes(): HasMany
+    {
+        return $this->hasMany(Pass::class);
+    }
+
+    public function pointTransactions(): HasMany
+    {
+        return $this->hasMany(PointTransaction::class);
+    }
+
+    // 전체 번호 010-1234-5678 (대표 화면의 상세에서만)
+    public function formattedPhone(): string
+    {
+        $p = preg_replace('/\D/', '', $this->phone);
+
+        return strlen($p) === 11 ? substr($p, 0, 3).'-'.substr($p, 3, 4).'-'.substr($p, 7) : (strlen($p) === 10 ? substr($p, 0, 3).'-'.substr($p, 3, 3).'-'.substr($p, 6) : $p);
     }
 
     // 화면 표시용 전화번호 010-****-1234

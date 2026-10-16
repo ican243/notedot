@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             DemoShopSeeder::class,
             DemoClassSessionSeeder::class,     // 일정을 먼저 → 1:1 예약은 일정 시간을 피해서 들어간다
             DemoReservationSeeder::class,
+            DemoPassSeeder::class,             // 회원권은 예약 뒤에 (지난 예약을 권으로 처리)
         ]);
     }
 }
