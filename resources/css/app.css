@@ -21,21 +21,22 @@
     --st-noshow: #b42318;
 }
 
-/* 계절 색: <html data-season="..."> 값에 따라 바뀜 */
+/* 계절 색: <html data-season="..."> 값에 따라 바뀜
+   기본(가을) 묶음이 :root 도 함께 잡으므로 맨 앞에 둔다 — 뒤에 있으면 같은 우선순위라 봄·여름을 덮어쓴다 */
+:root, [data-season="autumn"] {
+    --s1:#e96594; --s2:#f7e157; --sun:#ffffff; --sunh:rgba(255,255,255,.5); --sunh2:rgba(255,255,255,.12);
+    --o1:#f7da96; --o2:#f1c07d; --h1:#e6b29d; --h2:#c29182; --h3:#b77873; --h4:#a16773;
+    --dot:transparent; --ink:#ffffff; --btn:#b4506f;
+}
 [data-season="spring"] {
     --s1:#8fcbee; --s2:#fbd3e0; --sun:#ffffff; --sunh:rgba(255,255,255,.55); --sunh2:rgba(255,255,255,.18);
     --o1:#e4f3fa; --o2:#c3e4f2; --h1:#dcefc2; --h2:#bfe09c; --h3:#93c675; --h4:#aad28a;
-    --dot:#f49ab6; --ink:#2a3442; --btn:#c8557a;
+    --dot:#f49ab6; --ink:#2a3442; --btn:#bd4c72;   /* 버튼 흰 글자 대비 4.5:1 이상이 되도록 조금 진하게 */
 }
 [data-season="summer"] {
     --s1:#1b73c4; --s2:#68d3df; --sun:#ffe24d; --sunh:rgba(255,226,77,.45); --sunh2:rgba(255,226,77,.15);
     --o1:#74d8e2; --o2:#25a9c0; --h1:#66b874; --h2:#45a05d; --h3:#2f7f4b; --h4:#256a3e;
     --dot:transparent; --ink:#ffffff; --btn:#1b6fb8;
-}
-:root, [data-season="autumn"] {
-    --s1:#e96594; --s2:#f7e157; --sun:#ffffff; --sunh:rgba(255,255,255,.5); --sunh2:rgba(255,255,255,.12);
-    --o1:#f7da96; --o2:#f1c07d; --h1:#e6b29d; --h2:#c29182; --h3:#b77873; --h4:#a16773;
-    --dot:transparent; --ink:#ffffff; --btn:#b4506f;
 }
 [data-season="winter"] {
     --s1:#22325c; --s2:#9a8dcc; --sun:#eef1f8; --sunh:rgba(238,241,248,.28); --sunh2:rgba(238,241,248,.1);

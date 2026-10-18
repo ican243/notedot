@@ -5,6 +5,7 @@
 //   slot_unit     : 예약 시간 단위(분)
 //   booking_types : 이 업종에서 쓸 수 있는 예약 방식
 //   resource_type : 새 resource 를 만들 때 기본 종류 (person / space)
+//   icon, accent  : 데모 안내 화면 업종 카드의 아이콘(x-icon 이름)과 강조색 (계절 무관 고정, 흰 바탕 대비 4.5:1 이상)
 
 return [
     'beauty' => [
@@ -13,6 +14,8 @@ return [
         'slot_unit' => 30,
         'booking_types' => ['one_to_one'],
         'resource_type' => 'person',
+        'icon' => 'scissors',
+        'accent' => '#b0436f',
     ],
     'fitness' => [
         'name' => '피트니스·필라테스',
@@ -20,6 +23,8 @@ return [
         'slot_unit' => 60,
         'booking_types' => ['one_to_one', 'group'],
         'resource_type' => 'person',
+        'icon' => 'users',
+        'accent' => '#2e7a58',
     ],
     'clinic' => [
         'name' => '병원·클리닉',
@@ -27,6 +32,8 @@ return [
         'slot_unit' => 15,
         'booking_types' => ['one_to_one'],
         'resource_type' => 'person',
+        'icon' => 'stethoscope',
+        'accent' => '#0f766e',
     ],
     'space' => [
         'name' => '공간 대여',
@@ -34,5 +41,7 @@ return [
         'slot_unit' => 60,
         'booking_types' => ['space'],
         'resource_type' => 'space',
+        'icon' => 'door',
+        'accent' => '#5a4bbf',
     ],
 ];

@@ -13,10 +13,11 @@ return [
 
     'password' => DemoShopSeeder::PASSWORD,
 
+    // role: owner(대표) / staff(직원), shop: 계정이 속한 데모 매장 slug — 안내 화면에서 역할별로 묶어 보여 준다
     'accounts' => [
-        ['email' => 'owner@notedot.test', 'label' => '미용실 · 대표'],
-        ['email' => 'staff@notedot.test', 'label' => '미용실 · 직원'],
-        ['email' => 'pilates@notedot.test', 'label' => '필라테스 · 대표'],
-        ['email' => 'studyroom@notedot.test', 'label' => '스터디룸 · 대표'],
+        ['email' => 'owner@notedot.test', 'label' => '미용실 · 대표', 'role' => 'owner', 'shop' => 'demo-hair'],
+        ['email' => 'staff@notedot.test', 'label' => '미용실 · 직원', 'role' => 'staff', 'shop' => 'demo-hair'],
+        ['email' => 'pilates@notedot.test', 'label' => '필라테스 · 대표', 'role' => 'owner', 'shop' => 'demo-pilates'],
+        ['email' => 'studyroom@notedot.test', 'label' => '스터디룸 · 대표', 'role' => 'owner', 'shop' => 'demo-studyroom'],
     ],
 ];
