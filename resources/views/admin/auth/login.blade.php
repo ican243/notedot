@@ -9,13 +9,14 @@
             @if (config('demo.enabled'))
                 <a href="{{ url('/') }}" class="text-sm text-sub hover:underline">← 데모 안내</a>
             @endif
-            <x-season-switch :fallback="\App\Support\Season::resolve()" class="ml-auto" />
         </div>
-        <x-season-card class="mb-6">
-            <p class="text-sm opacity-80">예약·고객관리</p>
-            <h1 class="mt-1 text-3xl font-bold">notedot</h1>
-            <p class="mt-10 text-sm opacity-80">관리자 로그인</p>
-        </x-season-card>
+        <div class="mb-6 flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-lg bg-text text-white"><x-icon name="calendar" :size="20" /></span>
+            <div>
+                <h1 class="text-2xl font-bold leading-tight">notedot</h1>
+                <p class="text-sm text-sub">관리자 로그인</p>
+            </div>
+        </div>
 
         <form method="POST" action="{{ route('admin.login.attempt') }}"
               class="space-y-4 rounded-card bg-card p-6 shadow-card">

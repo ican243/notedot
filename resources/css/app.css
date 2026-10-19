@@ -19,6 +19,17 @@
     --st-completed: #3f4754;
     --st-canceled: #8a929e;
     --st-noshow: #b42318;
+
+    /* 업무 화면(관리자·데모 안내) 주요 버튼 색: 계절 무관 하나로 고정. 상태 색(확정 파랑·노쇼 빨강)과 헷갈리지 않는 남색 */
+    --accent: #2c3e6b;
+}
+
+/* 업무 화면 틀(<body class="plain">): 계절 장식 없이 흰색·연회색, 작은 모서리, 옅은 그림자, 단일 강조 버튼 색.
+   계절 테마는 손님 예약 화면(layouts/shop)에만 남긴다 */
+.plain {
+    --btn: var(--accent);
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06);
 }
 
 /* 계절 색: <html data-season="..."> 값에 따라 바뀜
@@ -133,25 +144,68 @@ body {
 .table tr:last-child td { border-bottom: 0; }
 .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; background: var(--bg); color: var(--text-sub); }
 
-/* ── 예약 캘린더 (계절 무관: 블록 색은 resource 색, 상태는 모양으로 구분) ── */
-.fc { --fc-border-color: var(--line); --fc-today-bg-color: #fbfaf7; --fc-now-indicator-color: var(--st-noshow); font-size: .8125rem; }
-.fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; }
+/* ── 예약 캘린더 ──
+   색 = 담당(resource): 연한 바탕 + 왼쪽 색 줄 (블록마다 --rc 로 담당 색을 받음)
+   상태 = 글자 배지 + 모양(대기 점선, 취소 줄 긋기). 색만으로 구분하지 않는다 */
+.fc { --fc-border-color: var(--line); --fc-today-bg-color: #fafbfc; --fc-now-indicator-color: var(--st-noshow); font-size: .8125rem; }
 .fc .fc-button { background: #fff; border: 1px solid #d9d9d9; color: var(--text); font-size: .8125rem; box-shadow: none !important; }
-.fc .fc-button:hover { background: var(--bg); color: var(--text); }
-.fc .fc-button-primary:not(:disabled).fc-button-active,
-.fc .fc-button-primary:not(:disabled):active { background: var(--text); border-color: var(--text); color: #fff; }
-.fc .fc-non-business { background: #f3f1ed; }
-.fc .fc-timegrid-event { border-radius: 6px; border-width: 0; box-shadow: none; }
-.fc .ev-body { padding: 2px 4px; line-height: 1.25; overflow: hidden; color: #fff; }
-.fc .ev-time { font-size: .7rem; opacity: .9; }
-.fc .ev-title { font-weight: 600; }
-.fc .ev-sub { font-size: .7rem; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc .ev-pending { outline: 2px dashed var(--st-pending); outline-offset: -2px; }
-.fc .ev-completed { opacity: .6; }
-.fc .ev-no_show { outline: 2px solid var(--st-noshow); outline-offset: -2px; opacity: .7; }
-.fc .ev-canceled { opacity: .35; }
-.fc .ev-session { box-shadow: inset 4px 0 0 rgba(0,0,0,.28); }
-.fc .ev-canceled .ev-title { text-decoration: line-through; }
+.fc .fc-non-business { background: #f4f5f7; }
+.fc .fc-timegrid-slot { height: var(--slot-h, 1.5em); }
+.fc .fc-col-header-cell-cushion { padding: 6px 4px; font-weight: 600; color: var(--text); }
+.fc .fc-timegrid-slot-label-cushion { color: var(--text-sub); }
+.fc .fc-timegrid-more-link { background: #fff; border: 1px solid #d0d4da; color: var(--text); font-weight: 600; border-radius: 4px; }
+
+.fc .fc-v-event.ev {
+    background: color-mix(in srgb, var(--rc, #8a929e) 13%, #fff);
+    border: 0; border-left: 4px solid var(--rc, #8a929e); border-radius: 4px;
+    box-shadow: 0 0 0 1px #fff;      /* 나란히 붙은 블록 사이 틈 */
+    cursor: pointer;
+}
+.fc .fc-v-event.ev:hover { background: color-mix(in srgb, var(--rc, #8a929e) 22%, #fff); }
+.fc .fc-v-event.ev .fc-event-main { color: var(--text); padding: 0; height: 100%; }
+.fc .ev-pending { outline: 1.5px dashed var(--st-pending); outline-offset: -1.5px; }
+.fc .ev-canceled { background: #f1f2f4 !important; border-left-color: #c3c7ce !important; }
+.fc .ev-canceled .ev-title { text-decoration: line-through; color: var(--text-sub); }
+.fc .ev-completed .ev-title, .fc .ev-completed .ev-time { color: var(--text-sub); }
+.fc .fc-v-event.ev-session { border-left: 6px double var(--rc, #8a929e); }   /* 그룹 일정: 두 줄 표시 + "그룹" 글자 */
+
+/* 블록 안: 크기에 따라 줄 수를 줄인다 (컨테이너 쿼리). 큰 블록 3줄 → 낮으면 2줄 → 아주 낮으면 한 줄 → 아주 좁으면 이름만 */
+.ev-box { height: 100%; container-type: size; overflow: hidden; }
+.ev-in { display: flex; flex-direction: column; padding: 3px 5px; line-height: 1.3; }
+.ev-head { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.ev-time { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: .72rem; color: var(--text-sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ev-head .ev-badge { flex-shrink: 0; margin-left: auto; }
+.ev-title, .ev-sub { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-title { font-weight: 600; }
+.ev-sub { font-size: .72rem; color: var(--text-sub); }
+@container (max-height: 52px) { .ev-sub { display: none; } }
+/* 아주 낮은 블록(15·20분): 한 줄에 "시간 이름 배지" */
+@container (max-height: 34px) {
+    .ev-in { flex-direction: row; align-items: center; gap: 4px; padding-top: 1px; padding-bottom: 0; }
+    .ev-head { display: contents; }
+    .ev-time { flex: 0 0 auto; order: 1; }
+    .ev-title { flex: 1 1 auto; order: 2; }
+    .ev-head .ev-badge { order: 3; margin-left: 0; }
+}
+/* 아주 좁은 블록: 시간은 빼고 배지 + 이름 */
+@container (max-width: 76px) {
+    .ev-time { display: none; }
+    .ev-head .ev-badge { margin-left: 0; }
+}
+
+/* 상태 배지 (블록·범례 공용). 확정은 기본이라 배지 없음 */
+.ev-badge { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: .68rem; font-weight: 700; line-height: 1.5; white-space: nowrap; }
+.ev-badge-pending { background: #fdf1e3; color: #9a4708; }
+.ev-badge-completed { background: #eceef1; color: #3f4754; }
+.ev-badge-canceled { background: #e4e6e9; color: #4b5260; }
+.ev-badge-no_show { background: var(--st-noshow); color: #fff; }
+.ev-badge-full { background: #22262e; color: #fff; }
+
+/* 일간 보기: 담당자마다 한 칸 (칸 머리글 = 담당 이름). 오늘 칸 강조는 끈다 */
+.cal-staff .fc { --fc-today-bg-color: transparent; }
+.cal-head { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.cal-head span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 
 /* 상태 배지 (계절 무관 고정 색) */
 .st-badge { display: inline-block; padding: .1rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 600; color: #fff; }

@@ -39,15 +39,15 @@ class CalendarService
                 'title' => $r->customer->name,
                 'start' => $r->start_at->format('Y-m-d\TH:i:s'),
                 'end' => $r->end_at->format('Y-m-d\TH:i:s'),
-                'backgroundColor' => $r->resource->color,
-                'borderColor' => $r->resource->color,
-                'classNames' => ['ev-'.$r->status],
+                'classNames' => ['ev', 'ev-'.$r->status],   // 색은 담당 색(color)으로 화면이 연하게 칠한다
                 'editable' => $r->status !== 'canceled',
                 'extendedProps' => [
                     'kind' => 'reservation',
                     'status' => $r->status,
                     'statusLabel' => Reservation::STATUSES[$r->status],
                     'resource' => $r->resource->name,
+                    'resourceId' => $r->resource_id,
+                    'color' => $r->resource->color,
                     'services' => $r->items->pluck('service_name')->implode(', '),
                 ],
             ])
@@ -71,9 +71,7 @@ class CalendarService
                 'title' => $s->service->name,
                 'start' => $s->start_at->format('Y-m-d\TH:i:s'),
                 'end' => $s->end_at->format('Y-m-d\TH:i:s'),
-                'backgroundColor' => $s->resource->color,
-                'borderColor' => $s->resource->color,
-                'classNames' => ['ev-session', $s->isCanceled() ? 'ev-canceled' : ''],
+                'classNames' => ['ev', 'ev-session', $s->isCanceled() ? 'ev-canceled' : ''],
                 'editable' => ! $s->isCanceled(),
                 'extendedProps' => [
                     'kind' => 'session',
@@ -81,6 +79,8 @@ class CalendarService
                     'status' => $s->isCanceled() ? 'canceled' : 'confirmed',
                     'statusLabel' => '취소',
                     'resource' => $s->resource->name,
+                    'resourceId' => $s->resource_id,
+                    'color' => $s->resource->color,
                     'taken' => (int) $s->taken,
                     'capacity' => $s->capacity,
                 ],

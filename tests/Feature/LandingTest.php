@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-// 첫 주소: 데모 모드면 안내 화면(매장 3곳·관리자 계정), 아니면 관리자 로그인. 데모 계정 링크는 로그인 칸을 채운다
+// 첫 주소: 데모 모드면 안내 화면(매장 3곳·관리자 계정), 아니면 관리자 로그인. 데모 계정 링크는 로그인 칸을 채운다. 계절 전환은 손님 화면에만
 class LandingTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,7 +27,7 @@ class LandingTest extends TestCase
             ->assertSee('강사 또는 시간표')
             ->assertSee(route('shop.home', 'demo-pilates'))
             ->assertSee(route('admin.login', ['email' => 'staff@notedot.test']), false)
-            ->assertSee('계절 테마 바꾸기');
+            ->assertDontSee('계절 테마 바꾸기');   // 안내·관리자 화면은 계절 장식 없이 (손님 화면에만)
     }
 
     public function test_landing_has_try_buttons_role_cards_and_notice(): void
@@ -72,11 +72,13 @@ class LandingTest extends TestCase
         $this->get(route('admin.login').'?email[]=a')->assertOk();   // 배열을 보내도 오류 없이
     }
 
-    public function test_season_switch_on_admin_and_shop_pages_in_demo(): void
+    public function test_season_switch_only_on_shop_pages_in_demo(): void
     {
         config(['demo.enabled' => true]);
 
         $this->get(route('shop.home', 'demo-hair'))->assertOk()->assertSee('seasonSwitch', false)->assertSee("localStorage.getItem('notedot.season')", false);
-        $this->actingAs($this->staff(), 'admin')->get(route('admin.dashboard'))->assertOk()->assertSee('seasonSwitch', false);
+        // 업무 화면: 계절 전환 없음, 차분한 틀(plain)
+        $this->actingAs($this->staff(), 'admin')->get(route('admin.dashboard'))->assertOk()
+            ->assertDontSee('seasonSwitch', false)->assertSee('class="plain', false);
     }
 }

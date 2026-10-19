@@ -5,6 +5,7 @@ import { api } from '../api';
 import { listen, debounce } from '../realtime';
 
 const STORAGE_KEY = 'notedot.calendar.resources';
+const VIEW_KEY = 'notedot.calendar.view';
 
 const pad = (n) => String(n).padStart(2, '0');
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -46,6 +47,10 @@ function emptySessionForm() {
     };
 }
 
+const today = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+// 그 주 월요일
+const monday = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+
 // 지금 이후 가장 가까운 칸
 function nextSlot(unit) {
     const d = new Date();
@@ -54,7 +59,7 @@ function nextSlot(unit) {
 }
 
 export default (config) => {
-    // FullCalendar 객체는 Alpine 이 감시(반응형)하지 않도록 바깥 변수에 둔다
+    // 캘린더 판(calendar-fc.js)은 Alpine 이 감시(반응형)하지 않도록 바깥 변수에 둔다
     let calendar = null;
     let searchSeq = 0;
 
@@ -62,6 +67,8 @@ export default (config) => {
         config,
         selected: [],
         showCanceled: false,
+        view: 'day',             // day = 담당자별 칸 / week = 요일별 칸
+        cursor: today(),         // 보고 있는 날짜 (주간이면 그 주의 아무 날)
 
         modalOpen: false,
         mode: 'create',          // create | edit
@@ -85,8 +92,10 @@ export default (config) => {
 
         async init() {
             this.selected = this.loadSelected();
+            try { if (['day', 'week'].includes(localStorage.getItem(VIEW_KEY))) this.view = localStorage.getItem(VIEW_KEY); } catch (e) {}
             const { mountCalendar } = await import('./calendar-fc');
             calendar = mountCalendar(this.$refs.calendar, this);
+            this.redraw();
             this.listenRealtime();
         },
 
@@ -119,6 +128,36 @@ export default (config) => {
             this.notify(`${what} · ${e.resource ?? ''} ${when}`);
         },
 
+        // ── 보기·날짜 이동 ────────────────────
+        redraw() {
+            calendar?.show(this.view, this.view === 'week' ? monday(this.cursor) : this.cursor, this.selected);
+        },
+        setView(view) {
+            this.view = view;
+            try { localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+            this.redraw();
+        },
+        move(step) {
+            const n = step * (this.view === 'week' ? 7 : 1);
+            this.cursor = new Date(this.cursor.getFullYear(), this.cursor.getMonth(), this.cursor.getDate() + n);
+            this.redraw();
+        },
+        goToday() {
+            this.cursor = today();
+            this.redraw();
+        },
+        get isToday() {
+            const t = today();
+            return this.view === 'week' ? monday(this.cursor).getTime() === monday(t).getTime() : this.cursor.getTime() === t.getTime();
+        },
+        get title() {
+            const d = this.cursor;
+            if (this.view === 'day') return `${d.getMonth() + 1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
+            const a = monday(d);
+            const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
+            return `${a.getMonth() + 1}월 ${a.getDate()}일 – ${a.getMonth() === b.getMonth() ? '' : `${b.getMonth() + 1}월 `}${b.getDate()}일`;
+        },
+
         // ── 필터 ──────────────────────────────
         loadSelected() {
             const all = this.config.resources.map((r) => r.id);
@@ -135,8 +174,20 @@ export default (config) => {
             this.selected = this.selected.includes(id)
                 ? this.selected.filter((x) => x !== id)
                 : [...this.selected, id];
+            this.saveSelected();
+        },
+        // 전체 보기 / 한 명만 보기
+        selectAll() {
+            this.selected = this.config.resources.map((r) => r.id);
+            this.saveSelected();
+        },
+        selectOnly(id) {
+            this.selected = [id];
+            this.saveSelected();
+        },
+        saveSelected() {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.selected)); } catch (e) {}
-            calendar?.refetchEvents();
+            this.$nextTick(() => this.redraw());   // 일간 보기는 담당자 칸 수가 바뀌므로 다시 그린다 (빈 화면 → 캘린더가 보인 뒤에)
         },
         toggleCanceled() {
             this.showCanceled = !this.showCanceled;
@@ -152,14 +203,14 @@ export default (config) => {
         },
 
         // ── 예약 창 열기 ──────────────────────
-        openCreate(start = null, end = null) {
+        openCreate(start = null, end = null, resourceId = null) {
             start ??= nextSlot(this.config.slotUnit);   // "+ 예약" 버튼: 지금 이후 가장 가까운 칸
             this.mode = 'create';
             this.detail = null;
             this.errors = {};
             this.form = {
                 ...emptyForm(),
-                resource_id: this.selected.length === 1 ? this.selected[0] : (this.config.resources[0]?.id ?? null),
+                resource_id: resourceId ?? (this.selected.length === 1 ? this.selected[0] : (this.config.resources[0]?.id ?? null)),
                 date: ymd(start),
                 start_time: hm(start),
             };
@@ -484,12 +535,12 @@ export default (config) => {
             }
         },
 
-        // 드래그로 옮긴 직후: 서버가 거절하면 원래 자리로 되돌린다
-        async moveEvent(info) {
+        // 드래그로 옮긴 직후: 서버가 거절하면 원래 자리로 되돌린다. start = 진짜 날짜·시각 (일간 담당자 칸은 calendar-fc.js 가 바꿔서 준다)
+        async moveEvent(info, start) {
             const p = info.event.extendedProps;
             const url = p.kind === 'session' ? this.url('sessionMove', p.sessionId) : this.url('move', info.event.id);
             try {
-                const res = await api('PATCH', url, { start: info.event.startStr });
+                const res = await api('PATCH', url, { start });
                 this.notify(res.message);
             } catch (e) {
                 info.revert();

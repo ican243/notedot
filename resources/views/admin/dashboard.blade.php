@@ -3,11 +3,13 @@
 @section('title', '대시보드')
 
 @section('content')
-<x-season-card>
-    <p class="text-sm opacity-80">{{ now()->locale('ko')->isoFormat('YYYY년 M월 D일 dddd') }}</p>
-    <h1 class="mt-1 text-2xl font-bold">{{ $shop->name }}</h1>
-    <p class="mt-8">{{ $staff->name }}님, 안녕하세요.</p>
-</x-season-card>
+<div class="flex flex-wrap items-end justify-between gap-2">
+    <div>
+        <p class="text-sm text-sub">{{ now()->locale('ko')->isoFormat('YYYY년 M월 D일 dddd') }}</p>
+        <h1 class="mt-1 text-2xl font-bold">{{ $shop->name }}</h1>
+    </div>
+    <p class="text-sub">{{ $staff->name }}님, 안녕하세요.</p>
+</div>
 
 <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ($cards as [$label, $value])

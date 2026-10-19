@@ -1,4 +1,4 @@
-{{-- 관리자 화면 틀 (PC/태블릿). 각 화면은 @extends('layouts.admin') 후 @section('content') 만 채운다 --}}
+{{-- 관리자 화면 틀 (PC/태블릿). 각 화면은 @extends('layouts.admin') 후 @section('content') 만 채운다. 업무 화면이라 계절 장식 없이(plain) --}}
 <!DOCTYPE html>
 <html lang="ko" data-season="{{ $season ?? auth('admin')->user()?->shop?->season() ?? \App\Support\Season::resolve() }}">
 <head>
@@ -8,10 +8,9 @@
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', '관리자') · notedot</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-    @include('partials.season-boot')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen font-sans antialiased">
+<body class="plain min-h-screen font-sans antialiased">
 @auth('admin')
     @php
         $me = auth('admin')->user();
@@ -55,7 +54,6 @@
                 @if (config('demo.enabled'))
                     <span class="badge mr-auto">데모 · 매일 {{ config('demo.reset_at') }} 초기화</span>
                 @endif
-                <x-season-switch :fallback="$me->shop->season()" />
                 <span class="text-sm text-sub">{{ $me->name }} · {{ $me->isOwner() ? '대표' : '직원' }}</span>
                 <form method="POST" action="{{ route('admin.logout') }}">
                     @csrf

@@ -23,29 +23,57 @@
             @endif
         </div>
     @else
-        {{-- 담당자 필터 --}}
-        <div class="mb-4 flex flex-wrap items-center gap-2">
+        {{-- 이동·보기 줄 --}}
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1">
+                <button type="button" class="btn-line px-3" @click="move(-1)" :aria-label="view === 'day' ? '전날' : '전 주'">‹</button>
+                <button type="button" class="btn-line" @click="goToday()" :disabled="isToday" :class="isToday && 'opacity-50'" x-text="view === 'day' ? '오늘' : '이번 주'"></button>
+                <button type="button" class="btn-line px-3" @click="move(1)" :aria-label="view === 'day' ? '다음 날' : '다음 주'">›</button>
+            </div>
+            <h2 class="ml-1 text-lg font-bold" x-text="title"></h2>
+            <div class="ml-auto inline-flex rounded-lg border border-line bg-bg p-0.5 text-sm" role="tablist" aria-label="보기">
+                <button type="button" role="tab" class="rounded-md px-3 py-1.5" :aria-selected="view === 'day'"
+                        :class="view === 'day' ? 'bg-card font-semibold shadow-sm' : 'text-sub'" @click="setView('day')"
+                        x-text="'일간 · ' + config.labels.resource + '별'"></button>
+                <button type="button" role="tab" class="rounded-md px-3 py-1.5" :aria-selected="view === 'week'"
+                        :class="view === 'week' ? 'bg-card font-semibold shadow-sm' : 'text-sub'" @click="setView('week')">주간</button>
+            </div>
+        </div>
+
+        {{-- 담당자 필터: 누르면 켜고 끄기, "만" 은 그 사람만 보기 --}}
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+            <button type="button" class="rounded-full border px-3 py-1.5 text-sm"
+                    :class="selected.length === config.resources.length ? 'border-text bg-card font-semibold' : 'border-line bg-bg text-sub'"
+                    @click="selectAll()">전체</button>
             <template x-for="r in config.resources" :key="r.id">
-                <button type="button" @click="toggleResource(r.id)"
-                        class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition"
-                        :class="selected.includes(r.id) ? 'border-text bg-card' : 'border-line bg-bg text-sub'">
-                    <span class="inline-block size-2.5 rounded-full" :style="`background:${r.color}; opacity:${selected.includes(r.id) ? 1 : .3}`"></span>
-                    <span x-text="r.name"></span>
-                </button>
+                <span class="flex items-center rounded-full border text-sm transition"
+                      :class="selected.includes(r.id) ? 'border-text bg-card' : 'border-line bg-bg text-sub'">
+                    <button type="button" @click="toggleResource(r.id)" class="flex items-center gap-2 py-1.5 pr-1 pl-3" :aria-pressed="selected.includes(r.id)">
+                        <span class="inline-block size-2.5 rounded-sm" :style="`background:${r.color}; opacity:${selected.includes(r.id) ? 1 : .35}`"></span>
+                        <span x-text="r.name"></span>
+                    </button>
+                    <button type="button" class="py-1.5 pr-3 pl-1 text-xs text-sub hover:text-text" @click="selectOnly(r.id)" :aria-label="r.name + '만 보기'">만</button>
+                </span>
             </template>
             <label class="ml-auto flex items-center gap-2 text-sm text-sub">
                 <input type="checkbox" :checked="showCanceled" @change="toggleCanceled()"> 취소 포함
             </label>
         </div>
 
-        <div class="panel overflow-x-auto p-3 md:p-4">
-            <div x-ref="calendar" class="min-w-[640px]"></div>
+        <div class="panel overflow-x-auto p-2 md:p-3">
+            <p x-show="!selected.length" class="p-10 text-center text-sub" x-text="'위에서 볼 ' + config.labels.resource + '을(를) 골라 주세요.'"></p>
+            <div x-show="selected.length" x-ref="calendar"></div>
         </div>
 
-        {{-- 상태 범례 --}}
-        <div class="mt-3 flex flex-wrap gap-3 text-xs text-sub">
-            <span x-show="groupResources.length">굵은 왼쪽 선 = 그룹 일정 (신청 인원/정원)</span>
-            <span>테두리 점선 = 대기</span><span>흐림 = 완료</span><span>빨간 테두리 = 노쇼</span><span>줄 긋기 = 취소</span>
+        {{-- 범례: 색 = 담당, 배지 = 상태 --}}
+        <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-sub">
+            <span x-text="'왼쪽 색 줄 = 담당 ' + config.labels.resource"></span>
+            <span class="flex items-center gap-1.5"><span class="ev-badge ev-badge-pending">대기</span> 결제·확인 대기 (점선)</span>
+            <span class="flex items-center gap-1.5"><span class="ev-badge ev-badge-completed">완료</span></span>
+            <span class="flex items-center gap-1.5"><span class="ev-badge ev-badge-no_show">노쇼</span></span>
+            <span class="flex items-center gap-1.5"><span class="ev-badge ev-badge-canceled">취소</span> 줄 긋기</span>
+            <span>배지 없음 = 확정</span>
+            <span x-show="groupResources.length">두 줄 표시 = 그룹 일정 (신청/정원)</span>
         </div>
     @endunless
 

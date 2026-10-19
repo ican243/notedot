@@ -7,7 +7,7 @@
 @php($staffs = $accounts['staff'] ?? collect())
 
 @section('content')
-{{-- 1. 히어로: 왼쪽 소개·바로가기, 오른쪽 관리자 캘린더 미리보기(풍경 카드) --}}
+{{-- 1. 히어로: 왼쪽 소개·바로가기, 오른쪽 관리자 캘린더 미리보기 (실제 캘린더와 같은 블록 모양) --}}
 <section class="grid items-center gap-8 py-10 sm:py-14 lg:grid-cols-[1fr_1.05fr] lg:gap-12">
     <div>
         <p class="text-sm font-semibold text-sub">예약·고객관리 SaaS</p>
@@ -23,21 +23,21 @@
         <p class="mt-4 text-sm text-sub">회원가입 없이 바로 써 볼 수 있습니다{{ $demoPayment && $logMessages ? ' · 실제 결제·발송 없음' : '' }}</p>
     </div>
 
-    <x-season-card>
-        <div class="rounded-2xl bg-card text-text shadow-[0_8px_24px_rgba(0,0,0,.12)]" role="img" aria-label="관리자 예약 캘린더 미리보기">
+    <div class="rounded-xl border border-line bg-[#f4f5f7] p-3 sm:p-4">
+        <div class="overflow-hidden rounded-lg border border-line bg-card" role="img" aria-label="관리자 예약 캘린더 미리보기">
             <div class="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
-                <p class="text-sm font-semibold">예약 캘린더 <span class="font-normal text-sub">· 미리보기</span></p>
-                <span class="flex items-center gap-1 rounded-full bg-text px-2.5 py-1 text-xs font-medium text-white">
-                    <x-icon name="bolt" :size="12" /> 새 온라인 예약
+                <p class="text-sm font-semibold">예약 캘린더 <span class="font-normal text-sub">· 일간 미리보기</span></p>
+                <span class="flex items-center gap-1 rounded-md border border-line px-2 py-0.5 text-xs font-medium text-sub">
+                    <x-icon name="bolt" :size="12" /> 실시간
                 </span>
             </div>
             @if ($preview['resources'])
                 @php($cols = count($preview['resources']))
                 @php($blocks = [[0, 0, 1, 0, 'confirmed'], [0, 1.5, 1.5, 1, 'pending'], [1, 0.5, 2, 2, 'confirmed'], [1, 3, 1, 1, 'confirmed'], [2, 0, 1, 3, 'completed'], [2, 2, 1, 0, 'confirmed']])
-                <div class="grid border-b border-line pl-11 text-xs font-medium text-sub" style="grid-template-columns: repeat({{ $cols }}, minmax(0, 1fr))">
+                <div class="grid border-b border-line pl-11 text-xs font-semibold" style="grid-template-columns: repeat({{ $cols }}, minmax(0, 1fr))">
                     @foreach ($preview['resources'] as $r)
-                        <p class="flex min-w-0 items-center gap-1.5 px-2 py-2">
-                            <span class="h-2 w-2 shrink-0 rounded-full" style="background: {{ $r->color }}"></span>
+                        <p class="flex min-w-0 items-center justify-center gap-1.5 px-2 py-2">
+                            <span class="cal-dot" style="background: {{ $r->color }}"></span>
                             <span class="truncate">{{ $r->name }}</span>
                         </p>
                     @endforeach
@@ -53,12 +53,17 @@
                             <div class="relative border-l border-line" style="background: repeating-linear-gradient(180deg, transparent 0 calc(25% - 1px), var(--line) calc(25% - 1px) 25%)">
                                 @foreach ($blocks as [$col, $start, $len, $svc, $status])
                                     @continue($col !== $i || ! isset($preview['services'][$svc]))
-                                    <div class="absolute inset-x-1 overflow-hidden rounded-md px-1.5 py-1 text-[11px] leading-tight text-white
-                                                {{ $status === 'pending' ? 'outline-2 -outline-offset-2 outline-dashed outline-st-pending' : '' }}
-                                                {{ $status === 'completed' ? 'opacity-60' : '' }}"
-                                         style="top: calc({{ $start * 25 }}% + 2px); height: calc({{ $len * 25 }}% - 4px); background: {{ $r->color }}">
-                                        <p class="opacity-90">{{ sprintf('%d:%02d', 10 + floor($start), fmod($start, 1) * 60) }}</p>
-                                        <p class="truncate font-semibold">{{ $preview['services'][$svc] }}</p>
+                                    {{-- 실제 캘린더 블록과 같은 모양: 연한 담당 색 + 왼쪽 색 줄 + 상태 배지 --}}
+                                    <div class="absolute inset-x-1 overflow-hidden rounded px-1.5 py-1 text-[11px] leading-snug text-text
+                                                {{ $status === 'pending' ? 'outline-[1.5px] -outline-offset-[1.5px] outline-dashed outline-st-pending' : '' }}"
+                                         style="top: calc({{ $start * 25 }}% + 1px); height: calc({{ $len * 25 }}% - 2px); background: color-mix(in srgb, {{ $r->color }} 13%, #fff); border-left: 4px solid {{ $r->color }}">
+                                        <p class="flex items-center justify-between gap-1 text-sub">
+                                            <span>{{ sprintf('%d:%02d', 10 + floor($start), fmod($start, 1) * 60) }}</span>
+                                            @if ($status !== 'confirmed')
+                                                <span class="ev-badge ev-badge-{{ $status }}">{{ \App\Models\Reservation::STATUSES[$status] }}</span>
+                                            @endif
+                                        </p>
+                                        <p class="truncate font-semibold {{ $status === 'completed' ? 'text-sub' : '' }}">{{ $preview['services'][$svc] }}</p>
                                     </div>
                                 @endforeach
                             </div>
@@ -66,13 +71,14 @@
                     </div>
                 </div>
             @endif
-            <div class="flex flex-wrap gap-x-4 gap-y-1 px-4 py-3 text-xs text-sub">
-                <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-st-confirmed"></span>확정</span>
-                <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm border-2 border-dashed border-st-pending"></span>결제 대기</span>
-                <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-st-completed opacity-60"></span>완료</span>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-4 py-2.5 text-xs text-sub">
+                <span>왼쪽 색 줄 = 담당</span>
+                <span class="flex items-center gap-1"><span class="ev-badge ev-badge-pending">대기</span> 결제 대기</span>
+                <span class="flex items-center gap-1"><span class="ev-badge ev-badge-completed">완료</span></span>
+                <span>배지 없음 = 확정</span>
             </div>
         </div>
-    </x-season-card>
+    </div>
 </section>
 
 {{-- 2. 안내 띠: 데모에서 일어나지 않는 일 --}}
@@ -101,10 +107,9 @@
     <div class="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         @foreach ($shops as $row)
             <article class="panel flex flex-col overflow-hidden">
-                <div class="h-1.5" style="background: {{ $row['accent'] }}"></div>
                 <div class="flex flex-1 flex-col p-6">
                     <div class="flex items-center gap-3">
-                        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style="color: {{ $row['accent'] }}; background: color-mix(in srgb, {{ $row['accent'] }} 11%, white)">
+                        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-lg" style="color: {{ $row['accent'] }}; background: color-mix(in srgb, {{ $row['accent'] }} 11%, white)">
                             <x-icon :name="$row['icon']" :size="22" />
                         </span>
                         <div class="min-w-0">
@@ -175,7 +180,7 @@
             @php($main = $list->first())
             <article class="panel flex flex-col p-6" data-role="{{ $role }}">
                 <div class="flex items-center gap-3">
-                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-bg"><x-icon :name="$icon" :size="22" /></span>
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-bg"><x-icon :name="$icon" :size="22" /></span>
                     <div>
                         <h3 class="text-xl font-bold">{{ $title }}</h3>
                         <p class="text-[0.9375rem] text-sub">{{ $desc }}</p>
