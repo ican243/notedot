@@ -39,7 +39,7 @@ class LandingController extends Controller
         ]);
     }
 
-    // 업종 카드 한 장: 프리셋(이름·아이콘·색) + 매장 용어 + 예약 방식 + 예약 순서
+    // 업종 카드 한 장: 프리셋(이름·아이콘) + 매장 용어 + 예약 방식 + 예약 순서
     private function card(Shop $shop): array
     {
         $preset = config("industries.{$shop->industry}", []);
@@ -50,7 +50,6 @@ class LandingController extends Controller
             'shop' => $shop,
             'industry' => $preset['name'] ?? $shop->industry,
             'icon' => $preset['icon'] ?? 'calendar',
-            'accent' => $preset['accent'] ?? '#3f4754',
             'terms' => $shop->term('resource').' · '.$shop->term('service').' · '.$shop->term('customer'),
             'types' => $types->map(fn ($t) => Service::BOOKING_TYPES[$t] ?? $t)->all(),
             'steps' => [

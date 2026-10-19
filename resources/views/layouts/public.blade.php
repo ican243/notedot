@@ -1,4 +1,4 @@
-{{-- 공개 안내 화면 틀 (데모 첫 화면). 업무 화면과 같은 차분한 모양(plain). 본문 최대 너비 1100px --}}
+{{-- 공개 안내 화면 틀 (데모 첫 화면). 차분한 틀(plain) 위에 웜 미니멀 색(warm). 본문 최대 너비 1100px --}}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="plain min-h-screen font-sans text-base antialiased">
+<body class="plain warm min-h-screen font-sans text-base antialiased">
     <header class="border-b border-line bg-card">
         <div class="mx-auto flex w-full max-w-[1148px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-            <a href="{{ url('/') }}" class="flex items-center gap-2 font-bold">
-                <span class="grid h-8 w-8 place-items-center rounded-lg bg-text text-white"><x-icon name="calendar" :size="18" /></span>
+            <a href="{{ url('/') }}" class="flex min-h-11 items-center gap-2 font-bold">
+                <span class="grid h-8 w-8 place-items-center rounded-md bg-text text-white"><x-icon name="calendar" :size="18" /></span>
                 <span class="text-lg">notedot</span>
             </a>
             <span class="rounded-full border border-line px-2.5 py-0.5 text-sm font-medium text-sub">공개 데모</span>

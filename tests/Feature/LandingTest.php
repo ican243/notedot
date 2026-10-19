@@ -35,6 +35,9 @@ class LandingTest extends TestCase
         config(['demo.enabled' => true]);
 
         $html = $this->get('/')->assertOk()
+            ->assertSee('예약 관리, 더 간단하게.')
+            ->assertSeeInOrder(['href="#shops"', '고객 예약 체험하기', 'href="#admin"', '관리자 기능 둘러보기'], false)
+            ->assertSee('class="plain warm', false)
             ->assertSee('노트닷 헤어 예약 체험하기')
             ->assertSee('노트닷 스터디룸 예약 체험하기')
             ->assertSeeInOrder(['data-role="owner"', '노트닷 헤어 대표로 체험', 'data-role="staff"', '노트닷 헤어 직원으로 체험'], false)

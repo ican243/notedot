@@ -144,6 +144,24 @@ body {
 .table tr:last-child td { border-bottom: 0; }
 .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; background: var(--bg); color: var(--text-sub); }
 
+/* 데모 첫 화면(<body class="plain warm">): 웜 미니멀. 흰색 75% · 아이보리 20% · 브라운 포인트 5%.
+   보조 글자 #77716A 는 흰 카드 위(대비 4.8)에서, 아이보리 배경 위 보조 글자는 .on-bg(#736D66, 대비 4.7)로 */
+.warm {
+    --bg: #f8f7f4;
+    --card: #ffffff;
+    --text: #302d29;
+    --text-sub: #77716a;
+    --line: #e7e3dd;
+    --btn: #684f43;
+    --radius: 8px;
+    --shadow: none;
+}
+.warm .on-bg { color: #736d66; }
+.warm .on-tint { color: #635d57; }   /* 연한 담당 색 블록 위 보조 글자 (대비 5.4 이상) */
+.warm .btn-line { border-color: #d6d0c7; color: var(--text); }
+.warm .btn-main:hover { filter: none; background: #5a4339; }
+.warm .tint { background: #f3eee8; color: var(--btn); }   /* 아이콘 칸: 아주 옅은 브라운 */
+
 /* ── 예약 캘린더 ──
    색 = 담당(resource): 연한 바탕 + 왼쪽 색 줄 (블록마다 --rc 로 담당 색을 받음)
    상태 = 글자 배지 + 모양(대기 점선, 취소 줄 긋기). 색만으로 구분하지 않는다 */
