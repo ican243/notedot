@@ -32,7 +32,7 @@
     --shadow: 0 1px 2px rgba(16, 24, 40, .06);
 }
 
-/* 계절 색: <html data-season="..."> 값에 따라 바뀜
+/* 계절 색: <html data-season="..."> 값에 따라 바뀜 (지금 화면은 모두 plain/warm 이라 --btn 만 덮어써서 쓰고, 풍경 장식은 없앴다)
    기본(가을) 묶음이 :root 도 함께 잡으므로 맨 앞에 둔다 — 뒤에 있으면 같은 우선순위라 봄·여름을 덮어쓴다 */
 :root, [data-season="autumn"] {
     --s1:#e96594; --s2:#f7e157; --sun:#ffffff; --sunh:rgba(255,255,255,.5); --sunh2:rgba(255,255,255,.12);
@@ -78,42 +78,6 @@ body {
     background: var(--bg);
     color: var(--text);
 }
-
-/* 풍경 카드 (x-season-card) — 안쪽 장식만 absolute 배치 */
-.season-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    background: linear-gradient(180deg, var(--s1), var(--s2));
-    color: var(--ink);
-    isolation: isolate;
-}
-.season-card .sc-sun {
-    position: absolute; top: 14%; right: 12%;
-    width: 56px; aspect-ratio: 1; border-radius: 50%;
-    background: var(--sun);
-    box-shadow: 0 0 0 14px var(--sunh), 0 0 0 30px var(--sunh2);
-    z-index: -1;
-}
-.season-card .sc-sea {
-    position: absolute; left: 0; right: 0; bottom: 0; height: 34%;
-    background: linear-gradient(180deg, var(--o1), var(--o2));
-    z-index: -1;
-}
-.season-card .sc-hill {
-    position: absolute; bottom: -40%; border-radius: 50%; z-index: -1;
-}
-.season-card .sc-h1 { left: -10%; width: 70%; height: 75%; background: var(--h1); }
-.season-card .sc-h2 { right: -15%; width: 75%; height: 70%; background: var(--h2); }
-.season-card .sc-h3 { left: 15%; width: 60%; height: 55%; bottom: -35%; background: var(--h3); }
-.season-card .sc-h4 { right: 5%; width: 45%; height: 45%; bottom: -30%; background: var(--h4); }
-.season-card .sc-dot {
-    position: absolute; width: 7px; aspect-ratio: 1; border-radius: 50%;
-    background: var(--dot); z-index: -1;
-}
-[data-season="summer"] .season-card .sc-dot,
-[data-season="autumn"] .season-card .sc-dot { display: none; }
 
 /* 메인 버튼 (계절 색) */
 .btn-main {
@@ -161,6 +125,60 @@ body {
 .warm .btn-line { border-color: #d6d0c7; color: var(--text); }
 .warm .btn-main:hover { filter: none; background: #5a4339; }
 .warm .tint { background: #f3eee8; color: var(--btn); }   /* 아이콘 칸: 아주 옅은 브라운 */
+
+/* ── 손님 예약 화면 (웜 미니멀) ── */
+.warm .btn-main:disabled { opacity: .4; cursor: not-allowed; background: var(--btn); }
+.warm :is(.choice, .day-chip, .time-chip, .btn-main, .btn-line, summary, input[type="checkbox"]):focus-visible { outline: 2px solid var(--btn); outline-offset: 2px; }
+
+/* 단계 진행 바: 완료 = 옅은 브라운 + 체크, 현재 = 브라운, 아직 = 연회색 */
+.step { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.step-bar { height: 4px; border-radius: 2px; background: var(--line); }
+.step-done .step-bar { background: #b9a89c; }
+.step-now .step-bar { background: var(--btn); }
+.step-label { align-items: center; gap: 4px; min-width: 0; font-size: .875rem; color: #736d66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-done .step-label { color: var(--text); }
+.step-now .step-label { color: var(--text); font-weight: 700; }
+.step-mark { display: grid; place-items: center; width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; background: var(--btn); color: #fff; }
+
+/* 고르는 카드: 카드 전체가 버튼. 고르면 연한 웜 베이지 + 브라운 테두리 + 체크 */
+.choice {
+    display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 56px; padding: 14px 16px;
+    text-align: left; color: var(--text); background: var(--card);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    transition: border-color .12s, background-color .12s;
+}
+.choice:hover:not(:disabled) { border-color: #c9bfb4; }
+.choice[aria-pressed="true"] { background: #f5efe8; border-color: var(--btn); box-shadow: inset 0 0 0 1px var(--btn); }
+.choice[aria-pressed="true"] .text-sub { color: #635d57; }   /* 베이지 위 보조 글자 대비 5.7 */
+.choice:disabled { opacity: .5; cursor: not-allowed; }
+.choice-check {
+    display: grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px;
+    border: 1.5px solid #d6d0c7; border-radius: 50%; color: transparent;
+}
+.choice[aria-pressed="true"] .choice-check { background: var(--btn); border-color: var(--btn); color: #fff; }
+.deposit-tag { padding: 0 6px; border-radius: 4px; background: #f3eee8; color: var(--btn); font-weight: 600; }
+
+/* 날짜·시간 */
+.day-chip {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 56px; min-height: 60px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card);
+}
+.day-chip[aria-pressed="true"] { background: #f5efe8; border-color: var(--btn); box-shadow: inset 0 0 0 1px var(--btn); }
+.day-chip:disabled { opacity: .4; cursor: not-allowed; }
+.time-chip { min-height: 44px; padding: 6px 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); font-weight: 500; }
+.time-chip:hover:not(:disabled) { border-color: #c9bfb4; }
+.time-chip[aria-pressed="true"] { background: var(--btn); border-color: var(--btn); color: #fff; font-weight: 700; }
+.time-chip:disabled { background: var(--bg); color: #736d66; cursor: not-allowed; }
+
+/* [다음] 버튼 줄: 휴대폰은 화면 아래 고정(아이폰 홈 막대 영역 피함), 768px 이상은 목록 끝에 그대로 */
+.next-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--card); border-top: 1px solid var(--line);
+}
+@media (min-width: 768px) {
+    .next-bar { position: static; padding: 24px 0 0; background: none; border: 0; }
+}
 
 /* ── 예약 캘린더 ──
    색 = 담당(resource): 연한 바탕 + 왼쪽 색 줄 (블록마다 --rc 로 담당 색을 받음)

@@ -32,6 +32,7 @@ class PaymentController extends Controller
             'shop' => $shop,
             'payment' => $payment,
             'reservation' => $reservation,
+            'policy' => $this->payments->policyLines($shop),
             'config' => [
                 'gateway' => $this->gateway->clientConfig($payment),
                 'paymentId' => $payment->payment_key,

@@ -1,8 +1,15 @@
 // 고객 예약 화면의 동작 (Alpine 부품)
 // 1:1·공간: 상품 → 담당/공간 → 날짜·시간 → 정보 입력 / 그룹: 상품 → 일정 → 정보 입력
+// 각 단계는 "고르기(pick…) → [다음](next)" 두 번에 나눈다. 고른 것은 체크로 보이고, 이전 단계로 돌아가도 남는다
 // 가능한 시간은 서버(SlotService)가 계산하고, 저장할 때 서버가 다시 확인한다
 import { api } from '../api';
 import { listen, debounce } from '../realtime';
+
+// 받침이 있으면 a, 없으면 b (예: 시술을 / 디자이너를)
+const josa = (word, a, b) => {
+    const c = (word || '').charCodeAt(word.length - 1) - 0xac00;
+    return word + (c >= 0 && c <= 11171 && c % 28 ? a : b);
+};
 
 function emptyForm() {
     return {
@@ -20,6 +27,7 @@ export default (config) => ({
     step: 'service',        // service | resource | time | session | info
     service: null,
     resourceId: null,       // null = 상관없음 (1:1 에서만)
+    resourcePicked: false,  // 담당 단계에서 무언가 골랐는지 (상관없음도 고른 것)
     days: [],
     dayIndex: 0,
     time: null,
@@ -100,8 +108,37 @@ export default (config) => ({
     get steps() {
         const label = this.config.labels;
         return this.isGroup
-            ? [['service', label.service], ['session', '일정'], ['info', '정보 입력']]
-            : [['service', label.service], ['resource', label.resource], ['time', '날짜·시간'], ['info', '정보 입력']];
+            ? [['service', `${label.service} 선택`], ['session', '일정 선택'], ['info', `${label.customer} 정보 입력`]]
+            : [['service', `${label.service} 선택`], ['resource', `${label.resource} 선택`], ['time', '날짜·시간 선택'], ['info', `${label.customer} 정보 입력`]];
+    },
+    // 단계마다 화면 제목과 한 줄 설명
+    get heading() {
+        const { service, resource } = this.config.labels;
+        return {
+            service: [`어떤 ${josa(service, '을', '를')} 예약하시나요?`, `원하시는 ${josa(service, '을', '를')} 선택해 주세요.`],
+            resource: [`${josa(resource, '을', '를')} 선택해 주세요`, this.service?.type === 'one_to_one' ? '"상관없음"을 고르면 가장 빠른 시간을 볼 수 있어요.' : '이용하실 곳을 선택해 주세요.'],
+            time: ['날짜와 시간을 선택해 주세요', '예약할 수 있는 시간만 보여 드려요.'],
+            session: ['일정을 선택해 주세요', '남은 자리를 확인하고 선택해 주세요.'],
+            info: ['예약자 정보를 입력해 주세요', '예약 확인 안내에만 사용합니다.'],
+        }[this.step];
+    },
+    // 지금 단계에서 [다음]을 누를 수 있는지
+    get canNext() {
+        return {
+            service: !!this.service,
+            resource: this.resourcePicked,
+            time: !!this.time,
+            session: !!this.session && this.session.left > 0,
+        }[this.step] ?? false;
+    },
+    get nextLabel() {
+        const label = this.config.labels;
+        if (this.step === 'service') {
+            if (!this.service) return `다음 · ${label.resource} 선택`;
+            if (this.isGroup) return '다음 · 일정 선택';
+            return this.serviceResources.length === 1 ? '다음 · 날짜·시간 선택' : `다음 · ${label.resource} 선택`;
+        }
+        return this.step === 'resource' ? '다음 · 날짜·시간 선택' : '다음 · 정보 입력';
     },
     get stepIndex() {
         return this.steps.findIndex(([key]) => key === this.step);
@@ -111,40 +148,63 @@ export default (config) => ({
         return this.service.price * (this.isGroup ? this.form.party_size || 1 : 1);
     },
 
-    // ── 단계 이동 ──────────────────────────
+    // ── 고르기 (다음 단계로 넘어가지 않음) ──────
     pickService(s) {
+        if (this.service?.id !== s.id) {
+            // 다른 상품을 고르면 그 뒤에 고른 것은 지운다
+            this.resourceId = null;
+            this.resourcePicked = false;
+            this.time = null;
+            this.sessionId = null;
+            this.days = [];
+        }
         this.service = s;
-        this.resourceId = null;
-        this.time = null;
-        this.sessionId = null;
         this.errors = {};
         this.message = '';
-        if (s.type === 'group') {
-            this.go('session');
-            this.loadSessions();
-        } else if (this.serviceResources.length === 1) {
-            this.pickResource(this.serviceResources[0].id);   // 고를 것이 하나뿐이면 건너뛴다
-        } else {
-            this.go('resource');
-        }
     },
     pickResource(id) {
+        if (this.resourceId !== id) this.time = null;
         this.resourceId = id;
-        this.time = null;
-        this.go('time');
-        this.loadSlots();
+        this.resourcePicked = true;
     },
     pickTime(t) {
         this.time = t;
         this.message = '';
-        this.go('info');
+    },
+    pickDay(i) {
+        if (i === this.dayIndex) return;
+        this.dayIndex = i;
+        this.time = null;
     },
     pickSession(s) {
         if (s.left < 1) return;
+        if (this.sessionId !== s.id) this.form.party_size = 1;
         this.sessionId = s.id;
-        this.form.party_size = 1;
         this.message = '';
-        this.go('info');
+    },
+
+    // ── [다음] ────────────────────────────
+    next() {
+        if (!this.canNext) return;
+        if (this.step === 'service') {
+            if (this.isGroup) {
+                this.go('session');
+                this.loadSessions();
+            } else if (this.serviceResources.length === 1) {
+                this.pickResource(this.serviceResources[0].id);   // 고를 것이 하나뿐이면 건너뛴다
+                this.toTime();
+            } else {
+                this.go('resource');
+            }
+        } else if (this.step === 'resource') {
+            this.toTime();
+        } else {
+            this.go('info');
+        }
+    },
+    toTime() {
+        this.go('time');
+        this.loadSlots();
     },
     back() {
         const order = this.steps.map(([key]) => key);
@@ -179,9 +239,17 @@ export default (config) => ({
                 const i = this.days.findIndex((d) => d.date === date);
                 this.dayIndex = i === -1 ? 0 : i;
             } else {
+                // 이전 단계에 갔다 왔을 때: 고른 날짜·시간이 아직 가능하면 그대로 둔다
+                const date = this.time ? this.day?.date : null;
                 this.days = res.days;
-                const first = this.days.findIndex((d) => d.times.length);
-                this.dayIndex = first === -1 ? 0 : first;
+                const kept = date ? this.days.findIndex((d) => d.date === date && d.times.includes(this.time)) : -1;
+                if (kept === -1) {
+                    this.time = null;
+                    const first = this.days.findIndex((d) => d.times.length);
+                    this.dayIndex = first === -1 ? 0 : first;
+                } else {
+                    this.dayIndex = kept;
+                }
             }
         } catch (e) {
             if (!quiet) this.message = e.message;

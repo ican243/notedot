@@ -144,6 +144,17 @@ class PaymentService
         return ! empty($shop->cancel_policy['tiers']) ? $shop->cancel_policy : config('payment.default_cancel_policy');
     }
 
+    // 손님 화면에 보여 줄 취소 규정 문장 (예: "예약 24시간 전까지 취소: 보증금 100% 환불")
+    public function policyLines(Shop $shop): array
+    {
+        $lines = collect($this->policy($shop)['tiers'])->sortByDesc('hours')
+            ->map(fn ($t) => "예약 {$t['hours']}시간 전까지 취소: 보증금 {$t['percent']}% 환불")
+            ->values()->all();
+        $lines[] = '그 이후 취소·노쇼: 보증금 환불 없음';
+
+        return $lines;
+    }
+
     // 예약 창에 보여 줄 결제 정보 (결제가 없으면 null)
     public function summaryFor(Reservation $reservation): ?array
     {

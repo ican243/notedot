@@ -116,15 +116,8 @@
         </div>
     </section>
 
-    <section class="panel p-6">
-        <x-admin.field label="계절 테마" name="theme" help="자동: 3~5월 봄, 6~8월 여름, 9~11월 가을, 12~2월 겨울">
-            <select id="theme" name="theme" class="input max-w-xs">
-                @foreach (['auto' => '자동 (날짜 기준)', 'spring' => '봄', 'summer' => '여름', 'autumn' => '가을', 'winter' => '겨울'] as $v => $l)
-                    <option value="{{ $v }}" @selected(old('theme', $shop->theme) === $v)>{{ $l }}</option>
-                @endforeach
-            </select>
-        </x-admin.field>
-    </section>
+    {{-- 계절 테마: 화면이 모두 웜 미니멀로 바뀌어 쓰지 않음. 저장 값(theme)은 그대로 보낸다 --}}
+    <input type="hidden" name="theme" value="{{ old('theme', $shop->theme) }}">
 
     <div class="flex justify-end">
         <button class="btn-main">저장</button>

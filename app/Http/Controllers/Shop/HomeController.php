@@ -7,13 +7,14 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Shop;
 use App\Services\OnlineBookingService;
+use App\Services\PaymentService;
 use App\Services\Realtime\RealtimeTokenService;
 use Illuminate\View\View;
 
 // 고객 예약 페이지 (상품 → 담당/공간/일정 → 날짜·시간 → 정보 입력). 화면에 필요한 목록을 한 번에 넘긴다
 class HomeController extends Controller
 {
-    public function index(Shop $shop, OnlineBookingService $booking, RealtimeTokenService $realtime): View
+    public function index(Shop $shop, OnlineBookingService $booking, RealtimeTokenService $realtime, PaymentService $payments): View
     {
         // 예약 받는 상품 중, 담당하는 resource 가 하나라도 있는 것만
         $services = $shop->services()->where('is_active', true)
@@ -44,6 +45,8 @@ class HomeController extends Controller
                 'id' => $r->id, 'name' => $r->name, 'type' => $r->type, 'color' => $r->color, 'maxParty' => $r->max_party,
             ]),
             'labels' => ['resource' => term('resource'), 'service' => term('service'), 'customer' => term('customer')],
+            'cancelPolicy' => $payments->policyLines($shop),   // 정보 입력 단계에서 확인용 (보증금 환불 규정)
+            'holdMinutes' => config('payment.hold_minutes'),
             'realtime' => $realtime->clientConfig(route('shop.realtime.token', $shop)),
         ];
 

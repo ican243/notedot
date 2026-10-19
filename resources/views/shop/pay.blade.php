@@ -3,14 +3,14 @@
 @section('title', '보증금 결제')
 
 @section('content')
-<x-season-card class="mb-4">
-    <p class="text-sm opacity-80">{{ $shop->name }}</p>
-    <h1 class="mt-1 text-2xl font-bold">보증금 결제</h1>
-    <p class="mt-8 text-sm opacity-80">결제가 확인되면 예약이 확정됩니다.</p>
-</x-season-card>
+<header class="pt-2 pb-5">
+    <p class="text-sm"><span class="font-semibold">{{ $shop->name }}</span> <span class="on-bg">· 온라인 예약</span></p>
+    <h1 class="mt-4 text-[1.375rem] font-bold sm:text-2xl">보증금 결제</h1>
+    <p class="on-bg mt-1 text-[0.9375rem]">결제가 확인되면 예약이 확정됩니다.</p>
+</header>
 
 <div x-data="payPage(@js($config))" class="space-y-4" x-cloak>
-    <div class="panel divide-y divide-line text-sm">
+    <div class="panel divide-y divide-line text-[0.9375rem]">
         @php($start = $reservation->start_at)
         @foreach ([
             '일시' => $start->format('Y-m-d').' ('.['일', '월', '화', '수', '목', '금', '토'][$start->dayOfWeek].') '.$start->format('H:i'),
@@ -40,18 +40,29 @@
     <template x-if="demo">
         <div class="panel space-y-3 border-dashed p-5">
             <p class="text-sm font-semibold">데모 결제창</p>
-            <p class="text-xs text-sub">포트원 테스트 키를 넣기 전까지 쓰는 연습용 결제창입니다. 실제 결제는 일어나지 않습니다.</p>
-            <button type="button" class="btn-main w-full" :disabled="busy || left <= 0" @click="demoPay('paid')">결제 승인</button>
-            <button type="button" class="btn-line w-full" :disabled="busy || left <= 0" @click="demoPay('failed')">결제 실패로 해 보기</button>
+            <p class="text-sm text-sub">연습용 결제창입니다. 실제 결제는 일어나지 않습니다.</p>
+            <button type="button" class="btn-main min-h-12 w-full text-base" :disabled="busy || left <= 0" @click="demoPay('paid')">결제 승인</button>
+            <button type="button" class="btn-line min-h-11 w-full" :disabled="busy || left <= 0" @click="demoPay('failed')">결제 실패로 해 보기</button>
         </div>
     </template>
 
     <template x-if="!demo">
-        <button type="button" class="btn-main w-full py-3 text-base" :disabled="busy || left <= 0" @click="pay()"
+        <button type="button" class="btn-main min-h-12 w-full text-base" :disabled="busy || left <= 0" @click="pay()"
                 x-text="busy ? '결제 확인 중...' : '{{ number_format($payment->amount) }}원 결제하기'"></button>
     </template>
 
-    <p class="text-center text-xs text-sub">취소 규정에 따라 보증금이 환불됩니다. 매장에 문의해 주세요.</p>
+    <details class="panel group px-4 py-3 text-[0.9375rem]">
+        <summary class="flex min-h-8 cursor-pointer list-none items-center justify-between font-medium">
+            취소·환불 규정
+            <span class="text-sm text-sub group-open:hidden">보기</span><span class="hidden text-sm text-sub group-open:inline">접기</span>
+        </summary>
+        <ul class="mt-2 space-y-1 text-sm text-sub">
+            @foreach ($policy as $line)
+                <li>· {{ $line }}</li>
+            @endforeach
+            <li>· 예약 변경·취소는 매장으로 연락해 주세요.</li>
+        </ul>
+    </details>
 </div>
 
 @if (($config['gateway']['driver'] ?? '') === 'portone')

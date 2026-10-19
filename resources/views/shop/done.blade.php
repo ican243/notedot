@@ -13,17 +13,17 @@
         default => ['예약이 확정되었습니다', '예약 시간에 맞춰 방문해 주세요.'],
     };
 @endphp
-<x-season-card class="mb-4">
-    <p class="text-sm opacity-80">{{ $shop->name }}</p>
-    <h1 class="mt-1 text-2xl font-bold">{{ $title }}</h1>
-    <p class="mt-8 text-sm opacity-80">{{ $sub }}</p>
-</x-season-card>
+<header class="pt-2 pb-5">
+    <p class="text-sm"><span class="font-semibold">{{ $shop->name }}</span> <span class="on-bg">· 온라인 예약</span></p>
+    <h1 class="mt-4 text-[1.375rem] font-bold sm:text-2xl">{{ $title }}</h1>
+    <p class="on-bg mt-1 text-[0.9375rem]">{{ $sub }}</p>
+</header>
 
 @if ($payment?->status === 'ready')
-    <a href="{{ route('shop.pay.show', [$shop, $payment->payment_key]) }}" class="btn-main mb-4 block text-center">보증금 결제하기</a>
+    <a href="{{ route('shop.pay.show', [$shop, $payment->payment_key]) }}" class="btn-main mb-4 min-h-12 w-full text-base">보증금 결제하기</a>
 @endif
 
-<div class="panel divide-y divide-line text-sm">
+<div class="panel divide-y divide-line text-[0.9375rem]">
     @php($start = $reservation->start_at)
     @foreach ([
         '일시' => $start->format('Y-m-d').' ('.['일', '월', '화', '수', '목', '금', '토'][$start->dayOfWeek].') '.$start->format('H:i').' ~ '.$reservation->end_at->format('H:i'),
@@ -54,5 +54,5 @@
     </div>
 </div>
 
-<a href="{{ route('shop.home', $shop) }}" class="btn-line mt-4 block text-center">처음으로</a>
+<a href="{{ route('shop.home', $shop) }}" class="btn-line mt-4 min-h-11 w-full">처음으로</a>
 @endsection
